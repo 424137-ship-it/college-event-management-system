@@ -1,0 +1,430 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  ShieldAlert, Users, Calendar, CheckCircle2, XCircle, Clock,
+  Check, X, AlertTriangle, Activity, BarChart, Settings, Search, UserCheck, UserX
+} from 'lucide-react';
+import { reportsAPI, eventsAPI } from '../../services/api';
+import { toast } from 'react-toastify';
+
+export const AdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [stats, setStats] = useState(null);
+  const [pendingEvents, setPendingEvents] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [recentLogs, setRecentLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [userRoleFilter, setUserRoleFilter] = useState('STUDENT');
+  const [userSearch, setUserSearch] = useState('');
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [selectedEventToReject, setSelectedEventToReject] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+
+  const loadAdminData = async () => {
+    try {
+      const [adminStatsRes, usersRes] = await Promise.all([
+        reportsAPI.getAdminStats(),
+        reportsAPI.getAdminUsers(),
+      ]);
+      setStats(adminStatsRes.data.stats);
+      setPendingEvents(adminStatsRes.data.pending_events || []);
+      setRecentLogs(adminStatsRes.data.recent_logs || []);
+      setAllUsers(usersRes.data.results || usersRes.data || []);
+    } catch (err) {
+      console.error('Error loading admin dashboard:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadAdminData();
+  }, []);
+
+  const handleApproveEvent = async (eventId) => {
+    try {
+      await eventsAPI.approve(eventId);
+      toast.success('Event approved and published!');
+      setPendingEvents((prev) => prev.filter((e) => e.id !== eventId));
+      if (stats) setStats({ ...stats, pending_approvals: Math.max(0, stats.pending_approvals - 1) });
+    } catch (err) {
+      toast.error('Failed to approve event.');
+    }
+  };
+
+  const handleRejectEvent = async () => {
+    if (!selectedEventToReject) return;
+    try {
+      await eventsAPI.reject(selectedEventToReject.id, { reason: rejectionReason });
+      toast.info('Event rejected.');
+      setPendingEvents((prev) => prev.filter((e) => e.id !== selectedEventToReject.id));
+      setRejectModalOpen(false);
+      setRejectionReason('');
+    } catch (err) {
+      toast.error('Failed to reject event.');
+    }
+  };
+
+  const handleToggleUserStatus = async (userId) => {
+    try {
+      const res = await reportsAPI.toggleUserStatus(userId);
+      toast.success(res.data.message);
+      setAllUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, is_active_user: res.data.is_active_user } : u))
+      );
+    } catch (err) {
+      toast.error('Could not toggle user status.');
+    }
+  };
+
+  const filteredUsers = allUsers.filter((u) => {
+    const matchesRole = userRoleFilter === 'ALL' || u.role === userRoleFilter;
+    const matchesSearch = u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
+                          u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+                          (u.first_name && u.first_name.toLowerCase().includes(userSearch.toLowerCase()));
+    return matchesRole && matchesSearch;
+  });
+
+  return (
+    <div style={{ maxWidth: 1280, margin: '0 auto', padding: '30px 24px 80px 24px' }}>
+      {/* Top Banner */}
+      <div
+        className="glass-panel"
+        style={{
+          padding: '28px 32px',
+          background: '#FFFFFF',
+          borderRadius: 24,
+          marginBottom: 32,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 16,
+        }}
+      >
+        <div>
+          <span className="badge badge-red" style={{ marginBottom: 8 }}>ADMINISTRATIVE CONSOLE</span>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--dark-navy)' }}>
+            Chief Platform Administration
+          </h1>
+          <p style={{ color: 'var(--muted-text)', fontSize: '0.95rem' }}>
+            Full governance of students, organizers, event approvals, and system audit logs.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button onClick={loadAdminData} className="btn-secondary" style={{ padding: '10px 18px', fontSize: '0.88rem' }}>
+            Refresh Data
+          </button>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 28, borderBottom: '1px solid var(--soft-border)', paddingBottom: 12 }}>
+        {[
+          { id: 'overview', label: 'System Overview' },
+          { id: 'approvals', label: `Pending Approvals (${pendingEvents.length})` },
+          { id: 'users', label: 'User Management' },
+          { id: 'logs', label: 'Audit Activity Logs' },
+        ].map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setActiveTab(t.id)}
+            style={{
+              padding: '10px 18px',
+              borderRadius: 12,
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              background: activeTab === t.id ? 'var(--primary-purple)' : 'transparent',
+              color: activeTab === t.id ? '#FFFFFF' : 'var(--muted-text)',
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab 1: Overview */}
+      {activeTab === 'overview' && stats && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 20 }}>
+            <div className="glass-panel" style={{ padding: 22, background: '#FFFFFF' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--muted-text)', fontWeight: 600 }}>Enrolled Students</span>
+              <p style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--primary-purple)', marginTop: 4 }}>
+                {stats.total_students}
+              </p>
+            </div>
+
+            <div className="glass-panel" style={{ padding: 22, background: '#FFFFFF' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--muted-text)', fontWeight: 600 }}>Active Clubs</span>
+              <p style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--accent-blue)', marginTop: 4 }}>
+                {stats.total_clubs}
+              </p>
+            </div>
+
+            <div className="glass-panel" style={{ padding: 22, background: '#FFFFFF' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--muted-text)', fontWeight: 600 }}>Total Events</span>
+              <p style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--dark-navy)', marginTop: 4 }}>
+                {stats.total_events}
+              </p>
+            </div>
+
+            <div className="glass-panel" style={{ padding: 22, background: '#FFFFFF' }}>
+              <span style={{ fontSize: '0.85rem', color: 'var(--muted-text)', fontWeight: 600 }}>Pending Approvals</span>
+              <p style={{ fontSize: '2.2rem', fontWeight: 800, color: '#F59E0B', marginTop: 4 }}>
+                {stats.pending_approvals}
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Pending Approvals list */}
+          <div className="glass-panel" style={{ padding: 28, background: '#FFFFFF' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: 16 }}>
+              Pending Event Approvals Requiring Review
+            </h3>
+            {pendingEvents.length === 0 ? (
+              <p style={{ color: 'var(--muted-text)' }}>All events have been reviewed. No pending approvals.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {pendingEvents.map((ev) => (
+                  <div
+                    key={ev.id}
+                    style={{
+                      padding: 18,
+                      borderRadius: 16,
+                      background: 'var(--bg-primary)',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 14,
+                    }}
+                  >
+                    <div>
+                      <span className="badge badge-amber">{ev.category_name}</span>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginTop: 4 }}>{ev.title}</h4>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--muted-text)' }}>
+                        Proposed by {ev.organizer_name} • {ev.start_date} at {ev.venue_name}
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button
+                        onClick={() => handleApproveEvent(ev.id)}
+                        className="btn-primary"
+                        style={{ padding: '8px 16px', fontSize: '0.85rem', background: '#16A34A' }}
+                      >
+                        <Check size={16} /> Approve
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedEventToReject(ev);
+                          setRejectModalOpen(true);
+                        }}
+                        className="btn-secondary"
+                        style={{ padding: '8px 16px', fontSize: '0.85rem', color: '#DC2626' }}
+                      >
+                        <X size={16} /> Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 2: Approvals View */}
+      {activeTab === 'approvals' && (
+        <div className="glass-panel" style={{ padding: 28, background: '#FFFFFF' }}>
+          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: 20 }}>Event Approval Queue</h3>
+          {pendingEvents.length === 0 ? (
+            <p style={{ color: 'var(--muted-text)' }}>No events currently pending review.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {pendingEvents.map((ev) => (
+                <div key={ev.id} style={{ padding: 20, borderRadius: 18, background: 'var(--bg-primary)', border: '1px solid var(--soft-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <span className="badge badge-purple">{ev.category_name}</span>
+                      <h4 style={{ fontSize: '1.2rem', fontWeight: 800, marginTop: 4 }}>{ev.title}</h4>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--muted-text)', marginTop: 4 }}>{ev.short_description}</p>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--muted-text)', marginTop: 8, display: 'flex', gap: 16 }}>
+                        <span><strong>Dates:</strong> {ev.start_date} to {ev.end_date}</span>
+                        <span><strong>Venue:</strong> {ev.venue_name}</span>
+                        <span><strong>Max Cap:</strong> {ev.max_participants}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button onClick={() => handleApproveEvent(ev.id)} className="btn-primary" style={{ padding: '10px 18px', background: '#16A34A' }}>
+                        <Check size={16} /> Approve & Publish
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSelectedEventToReject(ev);
+                          setRejectModalOpen(true);
+                        }}
+                        className="btn-secondary"
+                        style={{ padding: '10px 18px', color: '#DC2626' }}
+                      >
+                        <X size={16} /> Reject
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 3: Users */}
+      {activeTab === 'users' && (
+        <div className="glass-panel" style={{ padding: 28, background: '#FFFFFF' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+            <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>User Accounts Management</h3>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <select
+                value={userRoleFilter}
+                onChange={(e) => setUserRoleFilter(e.target.value)}
+                style={{ padding: '8px 14px', borderRadius: 10, border: '1px solid var(--soft-border)' }}
+              >
+                <option value="ALL">All Roles</option>
+                <option value="STUDENT">Students</option>
+                <option value="ORGANIZER">Organizers</option>
+                <option value="ADMIN">Admins</option>
+              </select>
+
+              <input
+                type="text"
+                placeholder="Search users..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                style={{ padding: '8px 14px', borderRadius: 10, border: '1px solid var(--soft-border)' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--soft-border)', color: 'var(--muted-text)' }}>
+                  <th style={{ padding: '12px' }}>User</th>
+                  <th style={{ padding: '12px' }}>Role</th>
+                  <th style={{ padding: '12px' }}>Email</th>
+                  <th style={{ padding: '12px' }}>Roll / Organization</th>
+                  <th style={{ padding: '12px' }}>Status</th>
+                  <th style={{ padding: '12px' }}>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredUsers.map((u) => (
+                  <tr key={u.id} style={{ borderBottom: '1px solid var(--soft-border)' }}>
+                    <td style={{ padding: '12px', fontWeight: 700 }}>{u.first_name || u.username}</td>
+                    <td style={{ padding: '12px' }}>
+                      <span className="badge badge-purple">{u.role}</span>
+                    </td>
+                    <td style={{ padding: '12px', color: 'var(--muted-text)' }}>{u.email}</td>
+                    <td style={{ padding: '12px' }}>
+                      {u.student_profile?.roll_number || u.organizer_profile?.organization_name || 'N/A'}
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      <span className={`badge ${u.is_active_user ? 'badge-green' : 'badge-red'}`}>
+                        {u.is_active_user ? 'Active' : 'Deactivated'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      <button
+                        onClick={() => handleToggleUserStatus(u.id)}
+                        className="btn-secondary"
+                        style={{ padding: '6px 12px', fontSize: '0.8rem', color: u.is_active_user ? '#DC2626' : '#16A34A' }}
+                      >
+                        {u.is_active_user ? 'Deactivate' : 'Activate'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Audit Logs */}
+      {activeTab === 'logs' && (
+        <div className="glass-panel" style={{ padding: 28, background: '#FFFFFF' }}>
+          <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: 20 }}>System Audit & Activity Logs</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {recentLogs.map((log) => (
+              <div
+                key={log.id}
+                style={{
+                  padding: 16,
+                  borderRadius: 14,
+                  background: 'var(--bg-primary)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <div>
+                  <p style={{ fontWeight: 700, fontSize: '0.92rem' }}>{log.action}</p>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--muted-text)', marginTop: 2 }}>{log.details}</p>
+                </div>
+                <div style={{ textAlign: 'right', fontSize: '0.8rem', color: 'var(--muted-text)' }}>
+                  <p>{log.username || 'System'}</p>
+                  <p>{new Date(log.created_at).toLocaleString()}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Modal */}
+      {rejectModalOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1000,
+            background: 'rgba(23, 21, 43, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+          }}
+          onClick={() => setRejectModalOpen(false)}
+        >
+          <div
+            className="glass-panel"
+            style={{ width: '100%', maxWidth: 440, padding: 28, background: '#FFFFFF', borderRadius: 24 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: 12 }}>Reject Event Proposal</h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--muted-text)', marginBottom: 16 }}>
+              Provide the organizer with constructive feedback explaining why revision is required.
+            </p>
+            <textarea
+              rows={3}
+              placeholder="e.g. Schedule conflicts with College Convocation; please reschedule venue."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid var(--soft-border)', marginBottom: 16 }}
+            />
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setRejectModalOpen(false)} className="btn-secondary" style={{ flex: 1 }}>
+                Cancel
+              </button>
+              <button onClick={handleRejectEvent} className="btn-primary" style={{ flex: 1.5, background: '#DC2626' }}>
+                Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

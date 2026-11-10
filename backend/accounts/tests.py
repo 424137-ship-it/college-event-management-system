@@ -1,0 +1,207 @@
+import datetime
+from django.test import TestCase
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
+from rest_framework import status
+from events.models import EventCategory, Venue, Event, EventApproval
+from clubs.models import Club, ClubMembership
+from registrations.models import EventRegistration
+from attendance.models import Attendance
+from certificates.models import Certificate
+from budgets.models import Budget, Expense
+
+User = get_user_model()
+
+class CampusXComprehensiveIntegrationTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.now = timezone.now()
+
+        # Admin user
+        self.admin = User.objects.create_superuser(
+            username='test_admin', email='admin@test.com', password='password123', role='ADMIN'
+        )
+
+        # Organizer user
+        self.organizer = User.objects.create_user(
+            username='test_organizer', email='org@test.com', password='password123', role='ORGANIZER'
+        )
+
+        # Student user
+        self.student = User.objects.create_user(
+            username='test_student', email='student@test.com', password='password123', role='STUDENT'
+        )
+
+        # Category & Venue
+        self.category = EventCategory.objects.create(name='Technical', description='Tech events')
+        self.venue = Venue.objects.create(name='Main Hall', location='Block A', capacity=100)
+
+        # Club
+        self.club = Club.objects.create(
+            name='Test Tech Club', tagline='Innovating', description='Test Club',
+            category='Technical', president=self.organizer
+        )
+
+        # Event
+        self.event = Event.objects.create(
+            title='Integration Hackathon',
+            category=self.category,
+            venue=self.venue,
+            club=self.club,
+            organizer=self.organizer,
+            start_date=self.now.date() + datetime.timedelta(days=5),
+            end_date=self.now.date() + datetime.timedelta(days=6),
+            start_time=datetime.time(10, 0),
+            end_time=datetime.time(18, 0),
+            registration_deadline=self.now + datetime.timedelta(days=4),
+            max_participants=2,
+            status='PUBLISHED'
+        )
+
+    def test_user_registration_always_student(self):
+        """Test public registration assigns STUDENT role automatically"""
+        response = self.client.post('/api/auth/register/', {
+            'username': 'newuser',
+            'email': 'newuser@test.com',
+            'password': 'password123',
+            'first_name': 'New',
+            'last_name': 'User',
+            'roll_number': '21BCE9999'
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        new_user = User.objects.get(username='newuser')
+        self.assertEqual(new_user.role, User.STUDENT)
+        self.assertTrue(hasattr(new_user, 'student_profile'))
+        self.assertEqual(new_user.student_profile.roll_number, '21BCE9999')
+
+    def test_jwt_login(self):
+        """Test JWT token obtain and profile payload"""
+        response = self.client.post('/api/auth/login/', {
+            'username': 'test_student',
+            'password': 'password123'
+        })
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
+        self.assertEqual(response.data['user']['role'], 'STUDENT')
+
+    def test_event_registration_and_duplicate_prevention(self):
+        """Test event registration with QR generation and duplicate prevention"""
+        self.client.force_authenticate(user=self.student)
+        
+        # 1. First registration should succeed
+        res1 = self.client.post('/api/registrations/', {'event_id': self.event.id})
+        self.assertEqual(res1.status_code, status.HTTP_201_CREATED)
+        self.assertIn('registration', res1.data)
+        reg_id = res1.data['registration']['registration_id']
+        self.assertTrue(reg_id.startswith('CX-'))
+
+        # Check QR code generated
+        reg = EventRegistration.objects.get(registration_id=reg_id)
+        self.assertTrue(bool(reg.qr_code))
+
+        # 2. Duplicate registration attempt should be rejected
+        res2 = self.client.post('/api/registrations/', {'event_id': self.event.id})
+        self.assertEqual(res2.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('already registered', res2.data['error'].lower())
+
+    def test_event_capacity_limit(self):
+        """Test that event capacity limit is enforced"""
+        # Register student 1
+        EventRegistration.objects.create(event=self.event, user=self.student, status='CONFIRMED')
+
+        # Register student 2
+        user2 = User.objects.create_user(username='stu2', password='password123', role='STUDENT')
+        EventRegistration.objects.create(event=self.event, user=user2, status='CONFIRMED')
+
+        # Try to register student 3 (max_participants is 2)
+        user3 = User.objects.create_user(username='stu3', password='password123', role='STUDENT')
+        self.client.force_authenticate(user=user3)
+        res = self.client.post('/api/registrations/', {'event_id': self.event.id})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('capacity', res.data['error'].lower())
+
+    def test_attendance_verification_and_duplicate_prevention(self):
+        """Test ticket QR scanning, attendance marking, and duplicate scan rejection"""
+        reg = EventRegistration.objects.create(event=self.event, user=self.student, status='CONFIRMED')
+        
+        # Authenticate as organizer
+        self.client.force_authenticate(user=self.organizer)
+
+        # First scan
+        res1 = self.client.post('/api/attendance/verify/', {
+            'ticket_code': reg.registration_id,
+            'event_id': self.event.id,
+            'method': 'QR_SCAN'
+        })
+        self.assertEqual(res1.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(res1.data['success'])
+
+        # Duplicate scan
+        res2 = self.client.post('/api/attendance/verify/', {
+            'ticket_code': reg.registration_id,
+            'event_id': self.event.id,
+            'method': 'QR_SCAN'
+        })
+        self.assertEqual(res2.status_code, status.HTTP_200_OK)
+        self.assertTrue(res2.data.get('already_checked_in'))
+
+    def test_admin_event_approval_workflow(self):
+        """Test event draft, submission, and admin approval"""
+        draft_event = Event.objects.create(
+            title='Draft Event',
+            category=self.category,
+            venue=self.venue,
+            organizer=self.organizer,
+            start_date=self.now.date() + datetime.timedelta(days=10),
+            end_date=self.now.date() + datetime.timedelta(days=10),
+            start_time=datetime.time(10, 0),
+            end_time=datetime.time(12, 0),
+            registration_deadline=self.now + datetime.timedelta(days=8),
+            status='DRAFT'
+        )
+
+        # Organizer submits for approval
+        self.client.force_authenticate(user=self.organizer)
+        res_sub = self.client.post(f'/api/events/{draft_event.id}/submit_for_approval/')
+        self.assertEqual(res_sub.status_code, status.HTTP_200_OK)
+        draft_event.refresh_from_db()
+        self.assertEqual(draft_event.status, 'PENDING_APPROVAL')
+
+        # Admin approves
+        self.client.force_authenticate(user=self.admin)
+        res_app = self.client.post(f'/api/events/{draft_event.id}/approve/')
+        self.assertEqual(res_app.status_code, status.HTTP_200_OK)
+        draft_event.refresh_from_db()
+        self.assertEqual(draft_event.status, 'PUBLISHED')
+
+    def test_club_join_leave(self):
+        """Test club membership join and leave functionality"""
+        self.client.force_authenticate(user=self.student)
+        
+        # Join
+        res_join = self.client.post(f'/api/clubs/{self.club.id}/join/')
+        self.assertEqual(res_join.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(ClubMembership.objects.filter(club=self.club, user=self.student).exists())
+
+        # Leave
+        res_leave = self.client.post(f'/api/clubs/{self.club.id}/leave/')
+        self.assertEqual(res_leave.status_code, status.HTTP_200_OK)
+        self.assertFalse(ClubMembership.objects.filter(club=self.club, user=self.student).exists())
+
+    def test_public_certificate_verification(self):
+        """Test public certificate verification endpoint"""
+        cert = Certificate.objects.create(
+            event=self.event,
+            user=self.student,
+            certificate_type='WINNER',
+            recipient_name='Test Student',
+            position_rank='1st Place'
+        )
+
+        # Public verification requires NO authentication
+        res = self.client.get(f'/api/certificates/verify/{cert.certificate_id}/')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertTrue(res.data['valid'])
+        self.assertEqual(res.data['recipient_name'], 'Test Student')

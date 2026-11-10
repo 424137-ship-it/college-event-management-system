@@ -1,0 +1,199 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {
+  --bg-primary: #F3EEFF;
+  --bg-secondary: #FFFFFF;
+  --primary-purple: #A855F7;
+  --primary-purple-hover: #9333EA;
+  --primary-purple-glow: rgba(168, 85, 247, 0.35);
+  --light-violet: #D8B4FE;
+  --accent-blue: #8B9DFF;
+  --dark-navy: #17152B;
+  --muted-text: #77738B;
+  --soft-border: #E9E1F7;
+  --glass-bg: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(233, 225, 247, 0.85);
+  --card-shadow: 0 10px 30px -5px rgba(23, 21, 43, 0.05), 0 4px 12px -2px rgba(168, 85, 247, 0.04);
+  --card-shadow-hover: 0 20px 40px -10px rgba(168, 85, 247, 0.16), 0 8px 20px -4px rgba(23, 21, 43, 0.08);
+  --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-heading: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-primary);
+  color: var(--dark-navy);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+input, select, textarea {
+  font-family: inherit;
+  outline: none;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--card-shadow);
+  border-radius: var(--radius-lg);
+}
+
+.glass-panel-hover {
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.glass-panel-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--card-shadow-hover);
+  border-color: var(--light-violet);
+}
+
+/* Futuristic Gradient Backgrounds */
+.gradient-hero-bg {
+  background: radial-gradient(circle at 80% 20%, rgba(216, 180, 254, 0.45) 0%, rgba(243, 238, 255, 0) 60%),
+              radial-gradient(circle at 20% 80%, rgba(139, 157, 255, 0.3) 0%, rgba(243, 238, 255, 0) 50%),
+              linear-gradient(180deg, #F3EEFF 0%, #FFFFFF 100%);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #A855F7 0%, #8B9DFF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, #A855F7 0%, #9333EA 100%);
+  color: #FFFFFF;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.45);
+  background: linear-gradient(135deg, #9333EA 0%, #7E22CE 100%);
+}
+
+.btn-secondary {
+  background: #FFFFFF;
+  color: var(--dark-navy);
+  border: 1px solid var(--soft-border);
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+.btn-secondary:hover {
+  background: #F9F7FD;
+  border-color: var(--light-violet);
+  color: var(--primary-purple);
+  transform: translateY(-2px);
+}
+
+.btn-accent {
+  background: linear-gradient(135deg, #8B9DFF 0%, #6366F1 100%);
+  color: #FFFFFF;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.25);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Badge styles */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.badge-purple {
+  background: rgba(168, 85, 247, 0.12);
+  color: #9333EA;
+  border: 1px solid rgba(168, 85, 247, 0.25);
+}
+.badge-blue {
+  background: rgba(139, 157, 255, 0.14);
+  color: #4F46E5;
+  border: 1px solid rgba(139, 157, 255, 0.3);
+}
+.badge-green {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16A34A;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+.badge-amber {
+  background: rgba(245, 158, 11, 0.12);
+  color: #D97706;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+.badge-red {
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--light-violet);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-purple);
+}
