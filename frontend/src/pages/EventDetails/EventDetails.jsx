@@ -3,22 +3,24 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import {
   Calendar, Clock, MapPin, Users, Bookmark, Share2, CalendarPlus,
-  ShieldCheck, AlertCircle, CheckCircle2, ArrowLeft, Mail, Phone, User
+  ShieldCheck, AlertCircle, CheckCircle2, ArrowLeft, Mail, Phone, User, Edit3
 } from 'lucide-react';
 import { eventsAPI, registrationsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { TicketModal } from '../../components/modals/TicketModal';
+import { EditEventModal } from '../../components/modals/EditEventModal';
 import { toast } from 'react-toastify';
 
 export const EventDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [ticketModalOpen, setTicketModalOpen] = useState(false);
   const [ticketData, setTicketData] = useState(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -424,9 +426,46 @@ export const EventDetails = () => {
                 Calendar
               </button>
             </div>
+
+            {/* Admin or Organizer Edit Control */}
+            {(isAdmin || (user && (user.role === 'ORGANIZER' || user.role === 'ADMIN'))) && (
+              <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--soft-border)' }}>
+                <button
+                  onClick={() => setEditModalOpen(true)}
+                  className="btn-secondary"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    color: 'var(--primary-purple)',
+                    borderColor: 'var(--primary-purple)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <Edit3 size={16} />
+                  Edit Event Details
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Edit Event Modal */}
+      {editModalOpen && (
+        <EditEventModal
+          event={event}
+          isOpen={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          onSaved={(updated) => {
+            setEvent((prev) => ({ ...prev, ...updated }));
+          }}
+        />
+      )}
 
       {/* Ticket Modal */}
       {ticketData && (

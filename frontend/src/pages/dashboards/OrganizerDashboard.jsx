@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import {
   LayoutDashboard, PlusCircle, Calendar, Users, QrCode, DollarSign,
   Briefcase, BarChart3, Settings, ArrowRight, CheckCircle2, XCircle,
-  Clock, Download, FileSpreadsheet, ShieldAlert, Sparkles, AlertCircle
+  Clock, Download, FileSpreadsheet, ShieldAlert, Sparkles, AlertCircle,
+  Edit3, Building2
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -13,6 +14,8 @@ import { useAuth } from '../../context/AuthContext';
 import {
   reportsAPI, eventsAPI, attendanceAPI, budgetsAPI, clubsAPI
 } from '../../services/api';
+import { EditEventModal } from '../../components/modals/EditEventModal';
+import { CreateClubModal } from '../../components/modals/CreateClubModal';
 import { toast } from 'react-toastify';
 
 export const OrganizerDashboard = () => {
@@ -47,6 +50,9 @@ export const OrganizerDashboard = () => {
   });
 
   // Create Event Wizard State (5 Steps)
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedEventToEdit, setSelectedEventToEdit] = useState(null);
+  const [createClubModalOpen, setCreateClubModalOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [eventFormData, setEventFormData] = useState({
     title: '',
@@ -217,17 +223,27 @@ export const OrganizerDashboard = () => {
           </p>
         </div>
 
-        <button
-          onClick={() => {
-            setActiveTab('create');
-            setWizardStep(1);
-          }}
-          className="btn-primary"
-          style={{ padding: '12px 24px' }}
-        >
-          <PlusCircle size={18} />
-          Create New Event
-        </button>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setCreateClubModalOpen(true)}
+            className="btn-secondary"
+            style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 8, borderColor: 'var(--primary-purple)', color: 'var(--primary-purple)', fontWeight: 700 }}
+          >
+            <Building2 size={18} />
+            + Create Club / Association
+          </button>
+          <button
+            onClick={() => {
+              setActiveTab('create');
+              setWizardStep(1);
+            }}
+            className="btn-primary"
+            style={{ padding: '12px 24px' }}
+          >
+            <PlusCircle size={18} />
+            Create New Event
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -235,6 +251,7 @@ export const OrganizerDashboard = () => {
         {[
           { id: 'overview', label: 'Overview Analytics', icon: <BarChart3 size={16} /> },
           { id: 'manage', label: 'Manage Events', icon: <Calendar size={16} /> },
+          { id: 'clubs', label: 'My Clubs & Associations', icon: <Building2 size={16} /> },
           { id: 'attendance', label: 'QR Attendance Scanner', icon: <QrCode size={16} /> },
           { id: 'budget', label: 'Budget & Expenses (₹)', icon: <DollarSign size={16} /> },
           { id: 'sponsorships', label: 'Sponsorships', icon: <Briefcase size={16} /> },
@@ -390,14 +407,105 @@ export const OrganizerDashboard = () => {
                       </span>
                     </td>
                     <td style={{ padding: '14px' }}>
-                      <Link to={`/events/${ev.id}`} className="btn-secondary" style={{ padding: '6px 14px', fontSize: '0.8rem' }}>
-                        View
-                      </Link>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <Link to={`/events/${ev.id}`} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                          View
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setSelectedEventToEdit(ev);
+                            setEditModalOpen(true);
+                          }}
+                          className="btn-primary"
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 4 }}
+                        >
+                          <Edit3 size={13} />
+                          Edit
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Clubs & Associations */}
+      {activeTab === 'clubs' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+            <div>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>Recognized Clubs & Department Associations</h3>
+              <p style={{ color: 'var(--muted-text)', fontSize: '0.9rem' }}>
+                Manage campus student societies, chapter details, and launch authorized student associations.
+              </p>
+            </div>
+            <button
+              onClick={() => setCreateClubModalOpen(true)}
+              className="btn-primary"
+              style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 8 }}
+            >
+              <PlusCircle size={16} />
+              + Launch New Club / Association
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+            {clubs.map((c) => (
+              <div
+                key={c.id}
+                className="glass-panel"
+                style={{ padding: 22, background: '#FFFFFF', borderRadius: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 14,
+                        background: 'linear-gradient(135deg, #A855F7, #8B9DFF)',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '1.2rem',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {c.logo_url ? (
+                        <img src={c.logo_url} alt={c.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        c.name[0]
+                      )}
+                    </div>
+                    <div>
+                      <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--dark-navy)' }}>{c.name}</h4>
+                      <span className="badge badge-purple" style={{ fontSize: '0.75rem', padding: '2px 8px' }}>{c.category}</span>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '0.86rem', color: 'var(--muted-text)', lineHeight: 1.5, marginBottom: 14 }}>
+                    {c.tagline || (c.description ? c.description.slice(0, 90) + '...' : '')}
+                  </p>
+                </div>
+
+                <div style={{ paddingTop: 14, borderTop: '1px solid var(--soft-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--muted-text)', fontWeight: 600 }}>
+                    {c.members_count || 1} Members
+                  </span>
+                  <Link
+                    to={`/clubs/${c.id}`}
+                    className="btn-secondary"
+                    style={{ padding: '6px 14px', fontSize: '0.8rem' }}
+                  >
+                    View Page →
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -971,6 +1079,32 @@ export const OrganizerDashboard = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Edit Event Modal */}
+      {editModalOpen && selectedEventToEdit && (
+        <EditEventModal
+          event={selectedEventToEdit}
+          isOpen={editModalOpen}
+          onClose={() => {
+            setEditModalOpen(false);
+            setSelectedEventToEdit(null);
+          }}
+          onSaved={(updated) => {
+            setMyEvents((prev) => prev.map((e) => (e.id === updated.id ? { ...e, ...updated } : e)));
+          }}
+        />
+      )}
+
+      {/* Create Club Modal */}
+      {createClubModalOpen && (
+        <CreateClubModal
+          isOpen={createClubModalOpen}
+          onClose={() => setCreateClubModalOpen(false)}
+          onClubCreated={(newClub) => {
+            setClubs((prev) => [newClub, ...prev]);
+          }}
+        />
       )}
     </div>
   );

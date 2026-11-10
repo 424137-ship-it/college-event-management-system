@@ -110,11 +110,26 @@ class EventDetailSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             reg = obj.registrations.filter(user=request.user, status='CONFIRMED').first()
             if reg:
+                qr_data_url = ""
+                try:
+                    import qrcode, base64
+                    from io import BytesIO
+                    qr = qrcode.QRCode(version=1, box_size=8, border=2)
+                    qr.add_data(f"CAMPUSX_TICKET:{reg.registration_id}")
+                    qr.make(fit=True)
+                    img = qr.make_image(fill_color="#17152B", back_color="#FFFFFF")
+                    buf = BytesIO()
+                    img.save(buf, format='PNG')
+                    qr_data_url = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('utf-8')
+                except Exception:
+                    pass
+
                 return {
                     'registration_id': reg.registration_id,
                     'registered_at': reg.registered_at,
                     'status': reg.status,
-                    'qr_code_url': reg.qr_code.url if reg.qr_code else None,
+                    'qr_code': reg.qr_code.url if reg.qr_code else None,
+                    'qr_code_data_url': qr_data_url,
                 }
         return None
 

@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Users, Sparkles, Filter } from 'lucide-react';
+import { Search, Users, Sparkles, Filter, PlusCircle, Building2 } from 'lucide-react';
 import { clubsAPI } from '../../services/api';
+import { useAuth } from '../../context/AuthContext';
 import { ClubCard } from '../../components/cards/ClubCard';
+import { CreateClubModal } from '../../components/modals/CreateClubModal';
 
 export const Clubs = () => {
+  const { user, isOrganizer, isAdmin } = useAuth();
   const [clubs, setClubs] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [loading, setLoading] = useState(true);
+  const [createClubModalOpen, setCreateClubModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchClubs = async () => {
@@ -45,6 +49,18 @@ export const Clubs = () => {
         <p style={{ color: 'var(--muted-text)', fontSize: '1.05rem', marginTop: 8, maxWidth: 560, margin: '8px auto 0 auto' }}>
           Connect with people who share your interests, learn new skills, and build projects together.
         </p>
+        {(isOrganizer || isAdmin) && (
+          <div style={{ marginTop: 20 }}>
+            <button
+              onClick={() => setCreateClubModalOpen(true)}
+              className="btn-primary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', fontSize: '0.95rem' }}
+            >
+              <PlusCircle size={18} />
+              + Launch a Club or Department Association
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Search & Category Tabs */}
@@ -131,6 +147,17 @@ export const Clubs = () => {
             />
           ))}
         </div>
+      )}
+
+      {/* Create Club Modal */}
+      {createClubModalOpen && (
+        <CreateClubModal
+          isOpen={createClubModalOpen}
+          onClose={() => setCreateClubModalOpen(false)}
+          onClubCreated={(newClub) => {
+            setClubs((prev) => [newClub, ...prev]);
+          }}
+        />
       )}
     </div>
   );

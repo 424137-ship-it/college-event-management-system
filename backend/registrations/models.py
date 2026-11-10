@@ -42,7 +42,7 @@ class EventRegistration(models.Model):
             ticket_data = f"CAMPUSX_TICKET:{self.registration_id}"
             qr.add_data(ticket_data)
             qr.make(fit=True)
-            img = qr.make_image(fill_color="#17152B", back_color="#F3EEFF")
+            img = qr.make_image(fill_color="#17152B", back_color="#FFFFFF")
 
             buffer = BytesIO()
             img.save(buffer, format='PNG')

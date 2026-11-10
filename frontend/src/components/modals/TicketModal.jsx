@@ -8,6 +8,14 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
     window.print();
   };
 
+  const qrSrc =
+    registration.qr_code_data_url ||
+    (registration.qr_code
+      ? registration.qr_code.startsWith('http')
+        ? registration.qr_code
+        : `http://127.0.0.1:8000${registration.qr_code}`
+      : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=CAMPUSX_TICKET:${registration.registration_id}`);
+
   return (
     <div
       style={{
@@ -77,25 +85,24 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
           <div
             style={{
               padding: 16,
-              background: 'var(--bg-primary)',
+              background: '#FFFFFF',
               borderRadius: 20,
               border: '2px dashed #D8B4FE',
               marginBottom: 20,
               textAlign: 'center',
+              boxShadow: '0 4px 16px rgba(168, 85, 247, 0.08)',
             }}
           >
-            {registration.qr_code ? (
-              <img
-                src={registration.qr_code.startsWith('http') ? registration.qr_code : `http://127.0.0.1:8000${registration.qr_code}`}
-                alt="Ticket QR Code"
-                style={{ width: 170, height: 170, objectFit: 'contain', borderRadius: 8 }}
-              />
-            ) : (
-              <div style={{ width: 170, height: 170, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F3EEFF', borderRadius: 8 }}>
-                <span style={{ fontSize: '0.85rem', color: 'var(--muted-text)' }}>QR Generated</span>
-              </div>
-            )}
-            <p style={{ marginTop: 8, fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.05em', color: 'var(--primary-purple)' }}>
+            <img
+              src={qrSrc}
+              alt={`QR Code for ${registration.registration_id}`}
+              style={{ width: 180, height: 180, objectFit: 'contain', borderRadius: 8, display: 'block', margin: '0 auto' }}
+              onError={(e) => {
+                // Secondary fallback if browser blocks external or local media
+                e.target.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=CAMPUSX_TICKET:${registration.registration_id}`;
+              }}
+            />
+            <p style={{ marginTop: 8, fontSize: '0.88rem', fontWeight: 800, letterSpacing: '0.05em', color: 'var(--primary-purple)' }}>
               {registration.registration_id}
             </p>
           </div>
@@ -123,7 +130,7 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: 'var(--muted-text)' }}>Status:</span>
               <span className="badge badge-green">
-                <CheckCircle2 size={13} /> {registration.status}
+                <CheckCircle2 size={13} /> {registration.status || 'Confirmed'}
               </span>
             </div>
           </div>
@@ -141,7 +148,7 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
             <button
               onClick={() => {
                 const link = document.createElement('a');
-                link.href = registration.qr_code?.startsWith('http') ? registration.qr_code : `http://127.0.0.1:8000${registration.qr_code}`;
+                link.href = qrSrc;
                 link.download = `Ticket_${registration.registration_id}.png`;
                 link.click();
               }}

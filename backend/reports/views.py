@@ -21,14 +21,19 @@ class PublicPlatformStatsView(APIView):
         total_events = Event.objects.filter(status__in=['PUBLISHED', 'COMPLETED']).count()
         total_clubs = Club.objects.filter(is_active=True).count()
         total_students = User.objects.filter(role='STUDENT').count()
-        total_competitions = Event.objects.filter(category__name__icontains='Hackathon').count() + Event.objects.filter(title__icontains='Competition').count() + 15
+        total_competitions = Event.objects.filter(
+            Q(category__name__icontains='Hackathon') |
+            Q(category__name__icontains='Competition') |
+            Q(title__icontains='Competition') |
+            Q(title__icontains='Hackathon')
+        ).count()
         total_registrations = EventRegistration.objects.filter(status='CONFIRMED').count()
 
         return Response({
-            'total_events': max(total_events, 120),
-            'total_clubs': max(total_clubs, 25),
-            'total_students': max(total_students, 3500),
-            'total_competitions': max(total_competitions, 50),
+            'total_events': total_events,
+            'total_clubs': total_clubs,
+            'total_students': total_students,
+            'total_competitions': total_competitions,
             'total_registrations': total_registrations,
         })
 

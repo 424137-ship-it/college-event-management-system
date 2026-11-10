@@ -2,34 +2,49 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ShieldAlert, Users, Calendar, CheckCircle2, XCircle, Clock,
-  Check, X, AlertTriangle, Activity, BarChart, Settings, Search, UserCheck, UserX
+  Check, X, AlertTriangle, Activity, BarChart, Settings, Search, UserCheck, UserX,
+  Edit3, Trash2, PlusCircle, Building2
 } from 'lucide-react';
-import { reportsAPI, eventsAPI } from '../../services/api';
+import { reportsAPI, eventsAPI, clubsAPI } from '../../services/api';
+import { EditEventModal } from '../../components/modals/EditEventModal';
+import { CreateClubModal } from '../../components/modals/CreateClubModal';
 import { toast } from 'react-toastify';
 
 export const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState(null);
   const [pendingEvents, setPendingEvents] = useState([]);
+  const [allEvents, setAllEvents] = useState([]);
+  const [clubs, setClubs] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [recentLogs, setRecentLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRoleFilter, setUserRoleFilter] = useState('STUDENT');
   const [userSearch, setUserSearch] = useState('');
+  const [eventSearch, setEventSearch] = useState('');
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [selectedEventToReject, setSelectedEventToReject] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
+  // Modals for Admin Editing & Club Creation
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedEventToEdit, setSelectedEventToEdit] = useState(null);
+  const [createClubModalOpen, setCreateClubModalOpen] = useState(false);
+
   const loadAdminData = async () => {
     try {
-      const [adminStatsRes, usersRes] = await Promise.all([
+      const [adminStatsRes, usersRes, eventsRes, clubsRes] = await Promise.all([
         reportsAPI.getAdminStats(),
         reportsAPI.getAdminUsers(),
+        eventsAPI.getAll({ scope: 'admin' }),
+        clubsAPI.getAll(),
       ]);
       setStats(adminStatsRes.data.stats);
       setPendingEvents(adminStatsRes.data.pending_events || []);
       setRecentLogs(adminStatsRes.data.recent_logs || []);
       setAllUsers(usersRes.data.results || usersRes.data || []);
+      setAllEvents(eventsRes.data.results || eventsRes.data || []);
+      setClubs(clubsRes.data.results || clubsRes.data || []);
     } catch (err) {
       console.error('Error loading admin dashboard:', err);
     } finally {
@@ -46,9 +61,24 @@ export const AdminDashboard = () => {
       await eventsAPI.approve(eventId);
       toast.success('Event approved and published!');
       setPendingEvents((prev) => prev.filter((e) => e.id !== eventId));
+      setAllEvents((prev) => prev.map((e) => (e.id === eventId ? { ...e, status: 'PUBLISHED' } : e)));
       if (stats) setStats({ ...stats, pending_approvals: Math.max(0, stats.pending_approvals - 1) });
     } catch (err) {
       toast.error('Failed to approve event.');
+    }
+  };
+
+  const handleDeleteEvent = async (eventId, title) => {
+    if (!window.confirm(`Are you sure you want to delete '${title}'? This action cannot be undone.`)) {
+      return;
+    }
+    try {
+      await eventsAPI.delete(eventId);
+      toast.success(`Event '${title}' has been removed.`);
+      setAllEvents((prev) => prev.filter((e) => e.id !== eventId));
+      setPendingEvents((prev) => prev.filter((e) => e.id !== eventId));
+    } catch (err) {
+      toast.error('Failed to delete event.');
     }
   };
 
@@ -112,7 +142,15 @@ export const AdminDashboard = () => {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 12 }}>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setCreateClubModalOpen(true)}
+            className="btn-secondary"
+            style={{ padding: '10px 18px', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 6, borderColor: 'var(--primary-purple)', color: 'var(--primary-purple)', fontWeight: 700 }}
+          >
+            <Building2 size={16} />
+            + Establish Club / Association
+          </button>
           <button onClick={loadAdminData} className="btn-secondary" style={{ padding: '10px 18px', fontSize: '0.88rem' }}>
             Refresh Data
           </button>
@@ -123,7 +161,9 @@ export const AdminDashboard = () => {
       <div style={{ display: 'flex', gap: 8, overflowX: 'auto', marginBottom: 28, borderBottom: '1px solid var(--soft-border)', paddingBottom: 12 }}>
         {[
           { id: 'overview', label: 'System Overview' },
+          { id: 'events', label: `All Events & Master Edit (${allEvents.length})` },
           { id: 'approvals', label: `Pending Approvals (${pendingEvents.length})` },
+          { id: 'clubs', label: `Clubs & Associations (${clubs.length})` },
           { id: 'users', label: 'User Management' },
           { id: 'logs', label: 'Audit Activity Logs' },
         ].map((t) => (
@@ -210,6 +250,16 @@ export const AdminDashboard = () => {
 
                     <div style={{ display: 'flex', gap: 10 }}>
                       <button
+                        onClick={() => {
+                          setSelectedEventToEdit(ev);
+                          setEditModalOpen(true);
+                        }}
+                        className="btn-secondary"
+                        style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 4 }}
+                      >
+                        <Edit3 size={14} /> Edit
+                      </button>
+                      <button
                         onClick={() => handleApproveEvent(ev.id)}
                         className="btn-primary"
                         style={{ padding: '8px 16px', fontSize: '0.85rem', background: '#16A34A' }}
@@ -231,6 +281,177 @@ export const AdminDashboard = () => {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Master Event Management */}
+      {activeTab === 'events' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+            <div>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>Master Event Management</h3>
+              <p style={{ color: 'var(--muted-text)', fontSize: '0.9rem' }}>
+                Full administrative authority to edit, reschedule, republish, or remove any event on the platform.
+              </p>
+            </div>
+            <div style={{ position: 'relative', width: 280 }}>
+              <Search size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--muted-text)' }} />
+              <input
+                type="text"
+                placeholder="Search events by title or venue..."
+                value={eventSearch}
+                onChange={(e) => setEventSearch(e.target.value)}
+                style={{ width: '100%', padding: '8px 12px 8px 36px', borderRadius: 12, border: '1px solid var(--soft-border)', background: '#FFFFFF', fontSize: '0.88rem' }}
+              />
+            </div>
+          </div>
+
+          <div className="glass-panel" style={{ padding: 20, background: '#FFFFFF', overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+              <thead>
+                <tr style={{ borderBottom: '2px solid var(--soft-border)', color: 'var(--muted-text)' }}>
+                  <th style={{ padding: '12px 14px' }}>Event Title</th>
+                  <th style={{ padding: '12px 14px' }}>Category</th>
+                  <th style={{ padding: '12px 14px' }}>Organizer</th>
+                  <th style={{ padding: '12px 14px' }}>Venue</th>
+                  <th style={{ padding: '12px 14px' }}>Start Date</th>
+                  <th style={{ padding: '12px 14px' }}>Status</th>
+                  <th style={{ padding: '12px 14px', textAlign: 'right' }}>Admin Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allEvents
+                  .filter((ev) =>
+                    ev.title.toLowerCase().includes(eventSearch.toLowerCase()) ||
+                    (ev.venue_name && ev.venue_name.toLowerCase().includes(eventSearch.toLowerCase()))
+                  )
+                  .map((ev) => (
+                    <tr key={ev.id} style={{ borderBottom: '1px solid var(--soft-border)' }}>
+                      <td style={{ padding: '14px', fontWeight: 700, color: 'var(--dark-navy)' }}>
+                        {ev.title}
+                      </td>
+                      <td style={{ padding: '14px' }}>{ev.category_name}</td>
+                      <td style={{ padding: '14px' }}>{ev.organizer_name || 'Admin'}</td>
+                      <td style={{ padding: '14px' }}>{ev.venue_name || 'TBA'}</td>
+                      <td style={{ padding: '14px' }}>{ev.start_date}</td>
+                      <td style={{ padding: '14px' }}>
+                        <span className={`badge ${
+                          ev.status === 'PUBLISHED' ? 'badge-green' :
+                          ev.status === 'PENDING_APPROVAL' ? 'badge-amber' :
+                          ev.status === 'REJECTED' ? 'badge-red' : 'badge-purple'
+                        }`}>
+                          {ev.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                          <Link to={`/events/${ev.id}`} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
+                            View
+                          </Link>
+                          <button
+                            onClick={() => {
+                              setSelectedEventToEdit(ev);
+                              setEditModalOpen(true);
+                            }}
+                            className="btn-primary"
+                            style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 4 }}
+                          >
+                            <Edit3 size={13} />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEvent(ev.id, ev.title)}
+                            className="btn-secondary"
+                            style={{ padding: '6px 10px', fontSize: '0.8rem', color: '#DC2626' }}
+                            title="Delete Event"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Clubs & Associations */}
+      {activeTab === 'clubs' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14 }}>
+            <div>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>Campus Clubs & Associations Registry</h3>
+              <p style={{ color: 'var(--muted-text)', fontSize: '0.9rem' }}>
+                All officially chartered student societies, technical chapters, and departmental wings.
+              </p>
+            </div>
+            <button
+              onClick={() => setCreateClubModalOpen(true)}
+              className="btn-primary"
+              style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 8 }}
+            >
+              <PlusCircle size={16} />
+              + Establish Club / Association
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+            {clubs.map((c) => (
+              <div
+                key={c.id}
+                className="glass-panel"
+                style={{ padding: 22, background: '#FFFFFF', borderRadius: 20, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 14,
+                        background: 'linear-gradient(135deg, #A855F7, #8B9DFF)',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '1.2rem',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      {c.logo_url ? (
+                        <img src={c.logo_url} alt={c.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        c.name[0]
+                      )}
+                    </div>
+                    <div>
+                      <h4 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--dark-navy)' }}>{c.name}</h4>
+                      <span className="badge badge-purple" style={{ fontSize: '0.75rem', padding: '2px 8px' }}>{c.category}</span>
+                    </div>
+                  </div>
+                  <p style={{ fontSize: '0.86rem', color: 'var(--muted-text)', lineHeight: 1.5, marginBottom: 14 }}>
+                    {c.tagline || (c.description ? c.description.slice(0, 90) + '...' : '')}
+                  </p>
+                </div>
+
+                <div style={{ paddingTop: 14, borderTop: '1px solid var(--soft-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--muted-text)', fontWeight: 600 }}>
+                    {c.members_count || 1} Members
+                  </span>
+                  <Link
+                    to={`/clubs/${c.id}`}
+                    className="btn-secondary"
+                    style={{ padding: '6px 14px', fontSize: '0.8rem' }}
+                  >
+                    View Page →
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -424,6 +645,34 @@ export const AdminDashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Admin Edit Event Modal */}
+      {editModalOpen && selectedEventToEdit && (
+        <EditEventModal
+          event={selectedEventToEdit}
+          isOpen={editModalOpen}
+          onClose={() => {
+            setEditModalOpen(false);
+            setSelectedEventToEdit(null);
+          }}
+          onSaved={(updated) => {
+            setAllEvents((prev) => prev.map((e) => (e.id === updated.id ? { ...e, ...updated } : e)));
+            setPendingEvents((prev) => prev.map((e) => (e.id === updated.id ? { ...e, ...updated } : e)));
+          }}
+        />
+      )}
+
+      {/* Admin Create Club Modal */}
+      {createClubModalOpen && (
+        <CreateClubModal
+          isOpen={createClubModalOpen}
+          onClose={() => setCreateClubModalOpen(false)}
+          onClubCreated={(newClub) => {
+            setClubs((prev) => [newClub, ...prev]);
+            if (stats) setStats({ ...stats, total_clubs: stats.total_clubs + 1 });
+          }}
+        />
       )}
     </div>
   );

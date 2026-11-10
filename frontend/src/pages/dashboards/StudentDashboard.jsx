@@ -91,7 +91,7 @@ export const StudentDashboard = () => {
             Welcome back, {studentName}! 👋
           </h1>
           <p style={{ color: 'var(--muted-text)', fontSize: '0.95rem', marginTop: 4 }}>
-            Roll No: <strong>{user?.student_profile?.roll_number || '21BCE1042'}</strong> • Year {user?.student_profile?.year_of_study || 3}
+            Roll No: <strong>{user?.student_profile?.roll_number || user?.username}</strong> • Year {user?.student_profile?.year_of_study || 1}
           </p>
         </div>
 

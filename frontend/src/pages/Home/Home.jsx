@@ -13,10 +13,10 @@ export const Home = () => {
   const [featuredEvents, setFeaturedEvents] = useState([]);
   const [popularClubs, setPopularClubs] = useState([]);
   const [stats, setStats] = useState({
-    total_events: '120+',
-    total_clubs: '25+',
-    total_students: '3,500+',
-    total_competitions: '50+',
+    total_events: 0,
+    total_clubs: 0,
+    total_students: 0,
+    total_competitions: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -33,10 +33,10 @@ export const Home = () => {
         setPopularClubs(clubsData.slice(0, 4));
         if (statsRes.data) {
           setStats({
-            total_events: `${statsRes.data.total_events}+`,
-            total_clubs: `${statsRes.data.total_clubs}+`,
-            total_students: `${statsRes.data.total_students.toLocaleString()}+`,
-            total_competitions: `${statsRes.data.total_competitions}+`,
+            total_events: statsRes.data.total_events,
+            total_clubs: statsRes.data.total_clubs,
+            total_students: statsRes.data.total_students,
+            total_competitions: statsRes.data.total_competitions,
           });
         }
       } catch (err) {

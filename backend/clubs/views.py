@@ -11,9 +11,17 @@ class ClubViewSet(viewsets.ModelViewSet):
     lookup_field = 'id'
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+        if self.action in ['create']:
+            return [IsOrganizerUserRole()]
+        if self.action in ['update', 'partial_update', 'destroy']:
             return [IsOrganizerUserRole()]
         return [permissions.AllowAny()]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        club = serializer.save(president=user if user.is_authenticated else None, is_active=True)
+        if user.is_authenticated:
+            ClubMembership.objects.get_or_create(club=club, user=user, defaults={'role': 'LEAD'})
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def join(self, request, id=None):

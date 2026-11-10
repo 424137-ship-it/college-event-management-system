@@ -66,12 +66,16 @@ export const eventsAPI = {
   getById: (id) => api.get(`/events/${id}/`),
   create: (data) => api.post('/events/', data),
   update: (id, data) => api.put(`/events/${id}/`, data),
+  partialUpdate: (id, data) => api.patch(`/events/${id}/`, data),
+  delete: (id) => api.delete(`/events/${id}/`),
   saveToggle: (id) => api.post(`/events/${id}/save_toggle/`),
   submitApproval: (id) => api.post(`/events/${id}/submit_for_approval/`),
   approve: (id) => api.post(`/events/${id}/approve/`),
   reject: (id, data) => api.post(`/events/${id}/reject/`, data),
   getCategories: () => api.get('/categories/'),
+  createCategory: (data) => api.post('/categories/', data),
   getVenues: () => api.get('/venues/'),
+  createVenue: (data) => api.post('/venues/', data),
 };
 
 export const clubsAPI = {
@@ -82,6 +86,8 @@ export const clubsAPI = {
   getMembers: (id) => api.get(`/clubs/${id}/members/`),
   getAnnouncements: (id) => api.get(`/clubs/${id}/announcements/`),
   createClub: (data) => api.post('/clubs/', data),
+  updateClub: (id, data) => api.put(`/clubs/${id}/`, data),
+  deleteClub: (id) => api.delete(`/clubs/${id}/`),
 };
 
 export const registrationsAPI = {

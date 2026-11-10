@@ -205,3 +205,128 @@ class CampusXComprehensiveIntegrationTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertTrue(res.data['valid'])
         self.assertEqual(res.data['recipient_name'], 'Test Student')
+
+    def test_super_admin_signup_with_secret_key(self):
+        """Test Super Admin registration with secret passkey ADMIN2026"""
+        response = self.client.post('/api/auth/register/', {
+            'username': 'superadmin_new',
+            'email': 'superadmin@college.edu',
+            'password': 'password123',
+            'first_name': 'Chief',
+            'last_name': 'Dean',
+            'role': 'ADMIN',
+            'admin_secret_key': 'ADMIN2026',
+            'organization_name': 'Office of the Dean',
+            'designation': 'Dean Student Affairs'
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        new_admin = User.objects.get(username='superadmin_new')
+        self.assertEqual(new_admin.role, 'ADMIN')
+        self.assertTrue(new_admin.is_staff)
+        self.assertTrue(new_admin.is_superuser)
+
+    def test_organizer_signup_and_club_creation(self):
+        """Test Organizer registration and ability to establish a club"""
+        reg_response = self.client.post('/api/auth/register/', {
+            'username': 'lead_org',
+            'email': 'lead@college.edu',
+            'password': 'password123',
+            'first_name': 'Alex',
+            'last_name': 'Rivera',
+            'role': 'ORGANIZER',
+            'organization_name': 'AI & Robotics Society',
+            'designation': 'Society President',
+            'department_name': 'Robotics Association',
+            'department_code': 'ROBO'
+        })
+        self.assertEqual(reg_response.status_code, status.HTTP_201_CREATED)
+        org_user = User.objects.get(username='lead_org')
+        self.assertEqual(org_user.role, 'ORGANIZER')
+
+        # Organizer establishes a new club
+        self.client.force_authenticate(user=org_user)
+        club_res = self.client.post('/api/clubs/', {
+            'name': 'AI Innovators Hub',
+            'tagline': 'Building Tomorrow',
+            'description': 'Student research and competition club.',
+            'category': 'Technical',
+            'logo_url': 'https://example.com/logo.png',
+            'cover_url': 'https://example.com/cover.png'
+        })
+        self.assertEqual(club_res.status_code, status.HTTP_201_CREATED)
+        new_club = Club.objects.get(name='AI Innovators Hub')
+        self.assertEqual(new_club.president, org_user)
+        self.assertTrue(ClubMembership.objects.filter(club=new_club, user=org_user, role='LEAD').exists())
+
+    def test_event_editing_by_admin_and_organizer(self):
+        """Test that Admin can edit any event and Organizer can edit their event"""
+        # Organizer edits their own event
+        self.client.force_authenticate(user=self.organizer)
+        edit_res1 = self.client.put(f'/api/events/{self.event.id}/', {
+            'title': 'Updated Hackathon Title',
+            'category': self.category.id,
+            'venue': self.venue.id,
+            'club': self.club.id,
+            'start_date': str(self.event.start_date),
+            'end_date': str(self.event.end_date),
+            'start_time': '10:00:00',
+            'end_time': '18:00:00',
+            'registration_deadline': str(self.event.registration_deadline).replace('+00:00', 'Z'),
+            'description': 'Updated description',
+            'max_participants': 200,
+            'registration_fee': '0.00',
+            'status': 'PUBLISHED'
+        })
+        self.assertEqual(edit_res1.status_code, status.HTTP_200_OK)
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.title, 'Updated Hackathon Title')
+
+        # Admin edits event
+        self.client.force_authenticate(user=self.admin)
+        edit_res2 = self.client.put(f'/api/events/{self.event.id}/', {
+            'title': 'Admin Revised Hackathon',
+            'category': self.category.id,
+            'venue': self.venue.id,
+            'club': self.club.id,
+            'start_date': str(self.event.start_date),
+            'end_date': str(self.event.end_date),
+            'start_time': '10:00:00',
+            'end_time': '18:00:00',
+            'registration_deadline': str(self.event.registration_deadline).replace('+00:00', 'Z'),
+            'description': 'Admin modified',
+            'max_participants': 300,
+            'registration_fee': '50.00',
+            'status': 'PUBLISHED'
+        })
+        self.assertEqual(edit_res2.status_code, status.HTTP_200_OK)
+        self.event.refresh_from_db()
+        self.assertEqual(self.event.title, 'Admin Revised Hackathon')
+
+        # Student cannot edit event
+        self.client.force_authenticate(user=self.student)
+        edit_res3 = self.client.put(f'/api/events/{self.event.id}/', {
+            'title': 'Hacked Title',
+            'category': self.category.id,
+            'venue': self.venue.id,
+            'club': self.club.id,
+            'start_date': str(self.event.start_date),
+            'end_date': str(self.event.end_date),
+            'start_time': '10:00:00',
+            'end_time': '18:00:00',
+            'registration_deadline': str(self.event.registration_deadline).replace('+00:00', 'Z'),
+            'description': 'Hacked',
+            'max_participants': 300,
+            'registration_fee': '0.00',
+            'status': 'PUBLISHED'
+        })
+        self.assertEqual(edit_res3.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_qr_code_data_url_in_registration_serializer(self):
+        """Test that EventRegistrationSerializer generates qr_code_data_url"""
+        self.client.force_authenticate(user=self.student)
+        res = self.client.post('/api/registrations/', {'event_id': self.event.id})
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        reg_data = res.data['registration']
+        self.assertIn('qr_code_data_url', reg_data)
+        self.assertTrue(reg_data['qr_code_data_url'].startswith('data:image/png;base64,'))
+

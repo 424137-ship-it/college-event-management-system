@@ -30,6 +30,22 @@ class EventViewSet(viewsets.ModelViewSet):
     ordering_fields = ['start_date', 'created_at', 'title', 'max_participants']
     ordering = ['start_date']
 
+    def get_permissions(self):
+        if self.action in ['create']:
+            return [IsOrganizerUserRole()]
+        elif self.action in ['update', 'partial_update', 'destroy']:
+            return [IsOrganizerUserRole()]
+        return super().get_permissions()
+
+    def check_object_permissions(self, request, obj):
+        super().check_object_permissions(request, obj)
+        if self.action in ['update', 'partial_update', 'destroy']:
+            # Admin can edit/delete anything; Organizer can edit/delete their own event
+            if request.user.role == 'ADMIN' or request.user.is_superuser:
+                return
+            if obj.organizer != request.user:
+                self.permission_denied(request, message="You do not have permission to edit this event.")
+
     def get_queryset(self):
         user = self.request.user
         queryset = Event.objects.all().select_related('category', 'venue', 'club', 'organizer').annotate(
