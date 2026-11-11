@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LayoutDashboard, Ticket, Calendar, Award, Bookmark, Users,
-  Bell, User, Settings, ArrowRight, Download, CheckCircle2, Clock, MapPin, QrCode
+  Bell, User, Settings, ArrowRight, Download, CheckCircle2, Clock, MapPin, QrCode, UserMinus
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { reportsAPI, registrationsAPI, certificatesAPI, clubsAPI, API_BASE_URL } from '../../services/api';
@@ -56,6 +56,24 @@ export const StudentDashboard = () => {
       user_roll_number: user?.student_profile?.roll_number,
     });
     setTicketModalOpen(true);
+  };
+
+  const handleCancelRegistration = async (regId, eventTitle) => {
+    if (!window.confirm(`Are you sure you want to unregister from '${eventTitle}'? Your pass will be cancelled and reserved seat released.`)) {
+      return;
+    }
+    try {
+      await registrationsAPI.cancel(regId);
+      setRegistrations((prev) => prev.filter((r) => r.id !== regId));
+      setStats((prev) => ({
+        ...prev,
+        total_registrations: Math.max(0, prev.total_registrations - 1),
+        upcoming_events: Math.max(0, prev.upcoming_events - 1),
+      }));
+      toast.success(`Successfully unregistered from '${eventTitle}'.`);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to cancel registration.');
+    }
   };
 
   const navItems = [
@@ -222,13 +240,32 @@ export const StudentDashboard = () => {
                           </div>
                         </div>
 
-                        <button
-                          onClick={() => handleOpenTicket(reg)}
-                          className="btn-primary"
-                          style={{ padding: '8px 14px', fontSize: '0.85rem', marginTop: 4 }}
-                        >
-                          <QrCode size={16} /> View Digital Pass
-                        </button>
+                        <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                          <button
+                            onClick={() => handleOpenTicket(reg)}
+                            className="btn-primary"
+                            style={{ flex: 1, padding: '8px 12px', fontSize: '0.85rem' }}
+                          >
+                            <QrCode size={15} /> Digital Pass
+                          </button>
+                          <button
+                            onClick={() => handleCancelRegistration(reg.id, reg.event_title)}
+                            className="btn-secondary"
+                            style={{
+                              padding: '8px 10px',
+                              fontSize: '0.8rem',
+                              color: '#EF4444',
+                              borderColor: 'rgba(239, 68, 68, 0.3)',
+                              background: 'rgba(239, 68, 68, 0.05)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                            title="Unregister from event"
+                          >
+                            <UserMinus size={15} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -277,7 +314,7 @@ export const StudentDashboard = () => {
                         </p>
                       </div>
 
-                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
                         {reg.has_attended && (
                           <span className="badge badge-green">
                             <CheckCircle2 size={13} /> Attended
@@ -289,6 +326,23 @@ export const StudentDashboard = () => {
                           style={{ padding: '10px 18px', fontSize: '0.88rem' }}
                         >
                           <QrCode size={16} /> Show QR Pass
+                        </button>
+                        <button
+                          onClick={() => handleCancelRegistration(reg.id, reg.event_title)}
+                          className="btn-secondary"
+                          style={{
+                            padding: '10px 14px',
+                            fontSize: '0.88rem',
+                            color: '#EF4444',
+                            borderColor: 'rgba(239, 68, 68, 0.35)',
+                            background: 'rgba(239, 68, 68, 0.05)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            fontWeight: 600,
+                          }}
+                        >
+                          <UserMinus size={15} /> Unregister
                         </button>
                       </div>
                     </div>

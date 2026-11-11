@@ -68,11 +68,13 @@ class EventViewSet(viewsets.ModelViewSet):
 
         today = timezone.now().date()
         if timeframe == 'upcoming':
-            queryset = queryset.filter(start_date__gte=today)
-        elif timeframe == 'past':
-            queryset = queryset.filter(start_date__lt=today)
+            queryset = queryset.filter(start_date__gt=today).exclude(status__in=['COMPLETED', 'CANCELLED'])
+        elif timeframe == 'ongoing':
+            queryset = queryset.filter(start_date__lte=today, end_date__gte=today).exclude(status__in=['COMPLETED', 'CANCELLED'])
+        elif timeframe in ['completed', 'past']:
+            queryset = queryset.filter(Q(end_date__lt=today) | Q(status='COMPLETED')).exclude(status='CANCELLED')
         elif timeframe == 'today':
-            queryset = queryset.filter(start_date=today)
+            queryset = queryset.filter(start_date__lte=today, end_date__gte=today).exclude(status='CANCELLED')
 
         if scope == 'organizer' and user.is_authenticated:
             # Events created by this organizer
@@ -88,7 +90,12 @@ class EventViewSet(viewsets.ModelViewSet):
         if getattr(self, 'detail', False) or self.action in ['retrieve', 'update', 'partial_update', 'destroy', 'submit_for_approval', 'approve', 'reject', 'save_toggle']:
             return queryset
 
-        return queryset.filter(status='PUBLISHED').order_by('start_date')
+        if timeframe in ['completed', 'past']:
+            return queryset.filter(status__in=['PUBLISHED', 'COMPLETED']).order_by('-start_date')
+        elif timeframe in ['upcoming', 'ongoing', 'today']:
+            return queryset.filter(status='PUBLISHED').order_by('start_date')
+
+        return queryset.filter(status__in=['PUBLISHED', 'COMPLETED']).order_by('start_date')
 
     def get_serializer_class(self):
         if self.action == 'list':

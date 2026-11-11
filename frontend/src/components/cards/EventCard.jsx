@@ -36,6 +36,17 @@ export const EventCard = ({ event, onSaveToggle }) => {
     year: 'numeric',
   });
 
+  const getEventTiming = () => {
+    if (event.timing_status) return event.timing_status;
+    const today = new Date().toISOString().split('T')[0];
+    const sDate = event.start_date ? event.start_date.split('T')[0] : '';
+    const eDate = (event.end_date || event.start_date) ? (event.end_date || event.start_date).split('T')[0] : '';
+    if (event.status === 'COMPLETED' || (eDate && eDate < today)) return 'COMPLETED';
+    if (sDate && sDate > today) return 'UPCOMING';
+    return 'ONGOING';
+  };
+  const timing = getEventTiming();
+
   return (
     <div
       className="glass-panel glass-panel-hover"
@@ -68,20 +79,78 @@ export const EventCard = ({ event, onSaveToggle }) => {
           }}
         />
 
-        {/* Category Badge */}
-        <span
-          className="badge badge-purple"
-          style={{
-            position: 'absolute',
-            top: 12,
-            left: 12,
-            backdropFilter: 'blur(8px)',
-            background: 'rgba(255, 255, 255, 0.92)',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          }}
-        >
-          {event.category_name || 'General'}
-        </span>
+        {/* Timing Status Badge */}
+        {timing === 'ONGOING' ? (
+          <span
+            style={{
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '5px 12px',
+              borderRadius: 9999,
+              background: 'rgba(239, 68, 68, 0.95)',
+              color: '#FFFFFF',
+              fontSize: '0.74rem',
+              fontWeight: 800,
+              letterSpacing: '0.04em',
+              boxShadow: '0 2px 10px rgba(239, 68, 68, 0.45)',
+              backdropFilter: 'blur(6px)',
+              zIndex: 2,
+            }}
+          >
+            <span
+              style={{
+                width: 7,
+                height: 7,
+                borderRadius: '50%',
+                background: '#FFFFFF',
+                boxShadow: '0 0 8px #FFFFFF',
+              }}
+            />
+            LIVE NOW
+          </span>
+        ) : timing === 'COMPLETED' ? (
+          <span
+            style={{
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 5,
+              padding: '5px 12px',
+              borderRadius: 9999,
+              background: 'rgba(17, 24, 39, 0.88)',
+              color: '#D1D5DB',
+              fontSize: '0.74rem',
+              fontWeight: 700,
+              backdropFilter: 'blur(6px)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+              zIndex: 2,
+            }}
+          >
+            🏁 Concluded
+          </span>
+        ) : (
+          <span
+            className="badge badge-purple"
+            style={{
+              position: 'absolute',
+              top: 12,
+              left: 12,
+              backdropFilter: 'blur(8px)',
+              background: 'rgba(255, 255, 255, 0.94)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              fontWeight: 700,
+              zIndex: 2,
+            }}
+          >
+            {event.category_name || 'Upcoming'}
+          </span>
+        )}
 
         {/* Bookmark button */}
         <button
@@ -107,19 +176,26 @@ export const EventCard = ({ event, onSaveToggle }) => {
         </button>
 
         {/* Registered status indicator */}
-        {event.is_registered && (
+        {(event.is_registered || event.registration_status) && (
           <span
-            className="badge badge-green"
+            className={`badge ${event.registration_status === 'PENDING' ? 'badge-yellow' : 'badge-green'}`}
             style={{
               position: 'absolute',
               bottom: 12,
               left: 12,
-              background: 'rgba(34, 197, 94, 0.95)',
+              background: event.registration_status === 'PENDING' ? 'rgba(245, 158, 11, 0.95)' : 'rgba(34, 197, 94, 0.95)',
               color: '#FFFFFF',
               border: 'none',
+              fontWeight: 700,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              zIndex: 2,
             }}
           >
-            <CheckCircle2 size={13} /> Registered
+            {event.registration_status === 'PENDING' ? (
+              <>⏳ Approval Pending</>
+            ) : (
+              <><CheckCircle2 size={13} /> Registered</>
+            )}
           </span>
         )}
       </div>

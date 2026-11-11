@@ -101,6 +101,57 @@ class Event(models.Model):
         from django.utils import timezone
         return self.status == 'PUBLISHED' and timezone.now() <= self.registration_deadline and self.registered_count < self.max_participants
 
+    @property
+    def timing_status(self):
+        from django.utils import timezone
+        import datetime
+        now = timezone.localtime()
+        today = now.date()
+        current_time = now.time()
+
+        if self.status == 'COMPLETED':
+            return 'COMPLETED'
+        if self.status == 'CANCELLED':
+            return 'CANCELLED'
+
+        if not self.start_date:
+            return 'UPCOMING'
+        end_date = self.end_date or self.start_date
+
+        if end_date < today:
+            return 'COMPLETED'
+        elif self.start_date > today:
+            return 'UPCOMING'
+        else: # Ongoing day or range (start_date <= today <= end_date)
+            def parse_time(t):
+                if isinstance(t, datetime.time):
+                    return t
+                if isinstance(t, str):
+                    try:
+                        return datetime.time.fromisoformat(t)
+                    except Exception:
+                        try:
+                            return datetime.datetime.strptime(t, "%H:%M:%S").time()
+                        except Exception:
+                            return None
+                return None
+
+            st = parse_time(self.start_time)
+            et = parse_time(self.end_time)
+
+            if self.start_date == end_date and st and et:
+                if current_time < st:
+                    return 'UPCOMING'
+                elif current_time > et:
+                    return 'COMPLETED'
+                else:
+                    return 'ONGOING'
+            elif end_date == today and et and current_time > et:
+                return 'COMPLETED'
+            elif self.start_date == today and st and current_time < st:
+                return 'UPCOMING'
+            return 'ONGOING'
+
     def __str__(self):
         return f"{self.title} [{self.status}]"
 

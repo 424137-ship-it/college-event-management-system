@@ -108,6 +108,7 @@ export const registrationsAPI = {
   approve: (id) => api.post(`/registrations/${id}/approve/`),
   reject: (id, data) => api.post(`/registrations/${id}/reject/`, data),
   cancel: (id) => api.post(`/registrations/${id}/cancel/`),
+  cancelByEvent: (eventId) => api.post('/registrations/cancel_by_event/', { event_id: eventId }),
   getSavedEvents: () => api.get('/saved-events/'),
 };
 

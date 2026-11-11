@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, LayoutGrid, List, SlidersHorizontal, Calendar, MapPin, X } from 'lucide-react';
+import { Search, Filter, LayoutGrid, List, SlidersHorizontal, Calendar, MapPin, X, Sparkles, CheckCircle2, Clock } from 'lucide-react';
 import { eventsAPI } from '../../services/api';
 import { EventCard } from '../../components/cards/EventCard';
 import { FALLBACK_EVENTS, FALLBACK_CATEGORIES, FALLBACK_VENUES } from '../../utils/fallbackData';
@@ -36,8 +36,28 @@ export const Events = () => {
     loadMetadata();
   }, []);
 
-  const getFilteredFallbackEvents = (cat, ven, query) => {
+  const getFilteredFallbackEvents = (cat, ven, query, tf) => {
     let list = [...FALLBACK_EVENTS];
+    const today = new Date().toISOString().split('T')[0];
+
+    if (tf === 'upcoming') {
+      list = list.filter((e) => {
+        const s = e.start_date ? e.start_date.split('T')[0] : '';
+        return s > today && e.status !== 'COMPLETED';
+      });
+    } else if (tf === 'ongoing') {
+      list = list.filter((e) => {
+        const s = e.start_date ? e.start_date.split('T')[0] : '';
+        const end = (e.end_date || e.start_date) ? (e.end_date || e.start_date).split('T')[0] : '';
+        return s <= today && end >= today && e.status !== 'COMPLETED';
+      });
+    } else if (tf === 'completed' || tf === 'past') {
+      list = list.filter((e) => {
+        const end = (e.end_date || e.start_date) ? (e.end_date || e.start_date).split('T')[0] : '';
+        return (end && end < today) || e.status === 'COMPLETED';
+      });
+    }
+
     if (cat) {
       list = list.filter((e) =>
         e.category?.toLowerCase() === cat.toLowerCase() ||
@@ -75,11 +95,11 @@ export const Events = () => {
         if (results.length > 0) {
           setEvents(results);
         } else {
-          setEvents(getFilteredFallbackEvents(selectedCategory, selectedVenue, searchQuery));
+          setEvents(getFilteredFallbackEvents(selectedCategory, selectedVenue, searchQuery, timeframe));
         }
       } catch (err) {
         console.warn('Backend connecting; serving fallback events for NIT campus.', err);
-        setEvents(getFilteredFallbackEvents(selectedCategory, selectedVenue, searchQuery));
+        setEvents(getFilteredFallbackEvents(selectedCategory, selectedVenue, searchQuery, timeframe));
       } finally {
         setLoading(false);
       }
@@ -92,7 +112,7 @@ export const Events = () => {
   return (
     <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px 80px 24px' }}>
       {/* Header */}
-      <div style={{ marginBottom: 36, textAlign: 'center' }}>
+      <div style={{ marginBottom: 28, textAlign: 'center' }}>
         <span className="badge badge-purple" style={{ marginBottom: 12 }}>
           CAMPUS EXPERIENCES
         </span>
@@ -102,6 +122,125 @@ export const Events = () => {
         <p style={{ color: 'var(--muted-text)', fontSize: '1.05rem', marginTop: 8, maxWidth: 600, margin: '8px auto 0 auto' }}>
           Discover competitions, tech hackathons, workshops, and fests happening all across campus.
         </p>
+      </div>
+
+      {/* Main Status Segment Tabs (Upcoming / Ongoing / Completed / All) */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginBottom: 28,
+        }}
+      >
+        <div
+          className="glass-panel"
+          style={{
+            display: 'inline-flex',
+            padding: 6,
+            background: '#FFFFFF',
+            borderRadius: 20,
+            boxShadow: '0 4px 20px rgba(23, 21, 43, 0.06)',
+            gap: 6,
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+          }}
+        >
+          <button
+            onClick={() => setTimeframe('upcoming')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 20px',
+              borderRadius: 14,
+              fontSize: '0.92rem',
+              fontWeight: 700,
+              border: 'none',
+              background: timeframe === 'upcoming' ? 'var(--primary-purple)' : 'transparent',
+              color: timeframe === 'upcoming' ? '#FFFFFF' : 'var(--muted-text)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: timeframe === 'upcoming' ? '0 4px 12px rgba(168, 85, 247, 0.35)' : 'none',
+            }}
+          >
+            <Sparkles size={16} />
+            Upcoming Events
+          </button>
+
+          <button
+            onClick={() => setTimeframe('ongoing')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 20px',
+              borderRadius: 14,
+              fontSize: '0.92rem',
+              fontWeight: 700,
+              border: 'none',
+              background: timeframe === 'ongoing' ? '#EF4444' : 'transparent',
+              color: timeframe === 'ongoing' ? '#FFFFFF' : 'var(--muted-text)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: timeframe === 'ongoing' ? '0 4px 12px rgba(239, 68, 68, 0.35)' : 'none',
+            }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                background: timeframe === 'ongoing' ? '#FFFFFF' : '#EF4444',
+                animation: 'pulse 1.5s infinite',
+              }}
+            />
+            Live & Ongoing
+          </button>
+
+          <button
+            onClick={() => setTimeframe('completed')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 20px',
+              borderRadius: 14,
+              fontSize: '0.92rem',
+              fontWeight: 700,
+              border: 'none',
+              background: (timeframe === 'completed' || timeframe === 'past') ? '#1F2937' : 'transparent',
+              color: (timeframe === 'completed' || timeframe === 'past') ? '#FFFFFF' : 'var(--muted-text)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: (timeframe === 'completed' || timeframe === 'past') ? '0 4px 12px rgba(31, 41, 55, 0.35)' : 'none',
+            }}
+          >
+            <CheckCircle2 size={16} />
+            Completed Events
+          </button>
+
+          <button
+            onClick={() => setTimeframe('')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              padding: '10px 20px',
+              borderRadius: 14,
+              fontSize: '0.92rem',
+              fontWeight: 700,
+              border: 'none',
+              background: timeframe === '' ? 'var(--dark-navy)' : 'transparent',
+              color: timeframe === '' ? '#FFFFFF' : 'var(--muted-text)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: timeframe === '' ? '0 4px 12px rgba(23, 21, 43, 0.25)' : 'none',
+            }}
+          >
+            <Calendar size={16} />
+            All Events
+          </button>
+        </div>
       </div>
 
       {/* Search and Filters Bar */}
@@ -207,10 +346,10 @@ export const Events = () => {
                 color: 'var(--dark-navy)',
               }}
             >
-              <option value="upcoming">Upcoming Events</option>
-              <option value="today">Today's Events</option>
-              <option value="past">Past Events</option>
-              <option value="">All Dates</option>
+              <option value="upcoming">✨ Upcoming Events</option>
+              <option value="ongoing">🔴 Live & Ongoing</option>
+              <option value="completed">🏁 Completed Events</option>
+              <option value="">🌐 All Events</option>
             </select>
 
             {/* Venue Filter */}

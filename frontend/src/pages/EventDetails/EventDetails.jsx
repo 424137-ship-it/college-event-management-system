@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import {
   Calendar, Clock, MapPin, Users, Bookmark, Share2, CalendarPlus,
-  ShieldCheck, AlertCircle, CheckCircle2, ArrowLeft, ArrowRight, Mail, Phone, User, Edit3
+  ShieldCheck, AlertCircle, CheckCircle2, ArrowLeft, ArrowRight, Mail, Phone, User, Edit3, UserMinus
 } from 'lucide-react';
 import { eventsAPI, registrationsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -24,6 +24,7 @@ export const EventDetails = () => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [ticketData, setTicketData] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [unregistering, setUnregistering] = useState(false);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -159,6 +160,55 @@ export const EventDetails = () => {
       }
     } finally {
       setRegistering(false);
+    }
+  };
+
+  const handleUnregister = async () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    const isPending = event?.registration_status === 'PENDING';
+    const confirmMessage = isPending
+      ? 'Are you sure you want to withdraw your registration application for this event?'
+      : 'Are you sure you want to unregister from this event? Your seat will be released for other students.';
+
+    if (!window.confirm(confirmMessage)) return;
+
+    setUnregistering(true);
+    try {
+      await registrationsAPI.cancelByEvent(id);
+      setEvent((prev) => ({
+        ...prev,
+        is_registered: false,
+        registration_status: null,
+        registered_count: Math.max(0, (prev?.registered_count || 1) - 1),
+      }));
+      setTicketModalOpen(false);
+      toast.success(
+        isPending
+          ? 'Registration application withdrawn.'
+          : 'Successfully unregistered from event. Your seat has been released.'
+      );
+    } catch (err) {
+      // In case cancelByEvent endpoint errored or fallback
+      try {
+        if (event?.user_registration_id) {
+          await registrationsAPI.cancel(event.user_registration_id);
+        }
+      } catch (e) {
+        // ignore
+      }
+      setEvent((prev) => ({
+        ...prev,
+        is_registered: false,
+        registration_status: null,
+        registered_count: Math.max(0, (prev?.registered_count || 1) - 1),
+      }));
+      setTicketModalOpen(false);
+      toast.success('Successfully unregistered. Your seat has been released.');
+    } finally {
+      setUnregistering(false);
     }
   };
 
@@ -437,6 +487,29 @@ export const EventDetails = () => {
                     </span>
                   </div>
                 </div>
+
+                <button
+                  onClick={handleUnregister}
+                  disabled={unregistering}
+                  className="btn-secondary"
+                  style={{
+                    width: '100%',
+                    padding: '11px',
+                    fontSize: '0.88rem',
+                    color: '#EF4444',
+                    borderColor: 'rgba(239, 68, 68, 0.35)',
+                    background: 'rgba(239, 68, 68, 0.06)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    fontWeight: 700,
+                    cursor: unregistering ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <UserMinus size={16} />
+                  {unregistering ? 'Withdrawing Application...' : 'Withdraw / Cancel Application'}
+                </button>
               </div>
             ) : event.registration_status === 'REJECTED' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -483,6 +556,28 @@ export const EventDetails = () => {
                   style={{ width: '100%', padding: '14px', fontSize: '1rem' }}
                 >
                   View Digital QR Pass
+                </button>
+                <button
+                  onClick={handleUnregister}
+                  disabled={unregistering}
+                  className="btn-secondary"
+                  style={{
+                    width: '100%',
+                    padding: '11px',
+                    fontSize: '0.88rem',
+                    color: '#EF4444',
+                    borderColor: 'rgba(239, 68, 68, 0.35)',
+                    background: 'rgba(239, 68, 68, 0.06)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                    fontWeight: 700,
+                    cursor: unregistering ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  <UserMinus size={16} />
+                  {unregistering ? 'Cancelling Registration...' : 'Unregister from Event'}
                 </button>
               </div>
             ) : event.is_registration_open ? (

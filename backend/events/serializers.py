@@ -38,6 +38,7 @@ class EventListSerializer(serializers.ModelSerializer):
     organizer_name = serializers.ReadOnlyField(source='organizer.get_full_name')
     registered_count = serializers.IntegerField(read_only=True)
     is_registration_open = serializers.BooleanField(read_only=True)
+    timing_status = serializers.ReadOnlyField()
     is_saved = serializers.SerializerMethodField()
     is_registered = serializers.SerializerMethodField()
 
@@ -49,7 +50,7 @@ class EventListSerializer(serializers.ModelSerializer):
             'short_description', 'poster', 'poster_url',
             'start_date', 'end_date', 'start_time', 'end_time',
             'registration_deadline', 'max_participants', 'registration_fee',
-            'requires_approval', 'status', 'is_featured', 'registered_count', 'is_registration_open',
+            'requires_approval', 'status', 'timing_status', 'is_featured', 'registered_count', 'is_registration_open',
             'is_saved', 'is_registered', 'created_at'
         ]
 
@@ -75,9 +76,11 @@ class EventDetailSerializer(serializers.ModelSerializer):
     approval = EventApprovalSerializer(read_only=True)
     registered_count = serializers.IntegerField(read_only=True)
     is_registration_open = serializers.BooleanField(read_only=True)
+    timing_status = serializers.ReadOnlyField()
     is_saved = serializers.SerializerMethodField()
     is_registered = serializers.SerializerMethodField()
     registration_status = serializers.SerializerMethodField()
+    user_registration_id = serializers.SerializerMethodField()
     user_ticket = serializers.SerializerMethodField()
 
     class Meta:
@@ -90,9 +93,9 @@ class EventDetailSerializer(serializers.ModelSerializer):
             'registration_deadline', 'max_participants', 'registration_fee',
             'requires_approval', 'eligibility', 'rules', 'faculty_coordinator',
             'student_coordinator_name', 'student_coordinator_contact', 'contact_email',
-            'status', 'is_featured', 'schedules', 'approval', 'registered_count',
+            'status', 'timing_status', 'is_featured', 'schedules', 'approval', 'registered_count',
             'is_registration_open', 'is_saved', 'is_registered', 'registration_status',
-            'user_ticket', 'created_at', 'updated_at'
+            'user_registration_id', 'user_ticket', 'created_at', 'updated_at'
         ]
 
     def get_is_saved(self, obj):
@@ -113,6 +116,14 @@ class EventDetailSerializer(serializers.ModelSerializer):
             reg = obj.registrations.filter(user=request.user).first()
             if reg:
                 return reg.status
+        return None
+
+    def get_user_registration_id(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            reg = obj.registrations.filter(user=request.user, status__in=['CONFIRMED', 'PENDING']).first()
+            if reg:
+                return reg.id
         return None
 
     def get_user_ticket(self, obj):

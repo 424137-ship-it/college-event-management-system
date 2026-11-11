@@ -183,3 +183,90 @@ class EventRegistrationPaymentTests(APITestCase):
 
         reg = EventRegistration.objects.get(id=reg_id)
         self.assertEqual(reg.status, 'REJECTED')
+
+    def test_student_can_unregister_from_event(self):
+        """Student can unregister directly using cancel_by_event endpoint."""
+        # 1. Register for free event
+        self.client.force_authenticate(user=self.student)
+        reg_res = self.client.post('/api/registrations/', {'event_id': self.free_event.id})
+        self.assertEqual(reg_res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(EventRegistration.objects.filter(event=self.free_event, user=self.student, status='CONFIRMED').count(), 1)
+
+        # 2. Call cancel_by_event
+        cancel_res = self.client.post('/api/registrations/cancel_by_event/', {'event_id': self.free_event.id})
+        self.assertEqual(cancel_res.status_code, status.HTTP_200_OK)
+        self.assertEqual(cancel_res.data['status'], 'CANCELLED')
+
+        # 3. Verify in DB
+        reg = EventRegistration.objects.get(event=self.free_event, user=self.student)
+        self.assertEqual(reg.status, 'CANCELLED')
+
+        # 4. Verify detail endpoint shows is_registered=False
+        event_res = self.client.get(f'/api/events/{self.free_event.id}/')
+        self.assertFalse(event_res.data['is_registered'])
+
+    def test_student_cannot_unregister_unregistered_event(self):
+        """Calling cancel_by_event without active registration returns 404."""
+        self.client.force_authenticate(user=self.student)
+        cancel_res = self.client.post('/api/registrations/cancel_by_event/', {'event_id': self.free_event.id})
+        self.assertEqual(cancel_res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_event_timing_status_and_timeframe_filters(self):
+        """Test ongoing, upcoming, and completed event categories and timeframe filtering."""
+        # Create an ongoing event (today)
+        ongoing_event = Event.objects.create(
+            title='Ongoing Coding Sprint',
+            organizer=self.organizer,
+            category=self.category,
+            venue=self.venue,
+            description='Active sprint today',
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + timedelta(days=1),
+            start_time='00:00:00',
+            end_time='23:59:59',
+            registration_deadline=timezone.now() + timedelta(hours=10),
+            max_participants=50,
+            status='PUBLISHED'
+        )
+
+        # Create a completed event (yesterday)
+        completed_event = Event.objects.create(
+            title='Completed Guest Lecture',
+            organizer=self.organizer,
+            category=self.category,
+            venue=self.venue,
+            description='Finished lecture',
+            start_date=timezone.now().date() - timedelta(days=5),
+            end_date=timezone.now().date() - timedelta(days=4),
+            start_time='10:00:00',
+            end_time='12:00:00',
+            registration_deadline=timezone.now() - timedelta(days=6),
+            max_participants=100,
+            status='COMPLETED'
+        )
+
+        # Check timing_status property
+        self.assertEqual(ongoing_event.timing_status, 'ONGOING')
+        self.assertEqual(completed_event.timing_status, 'COMPLETED')
+        self.assertEqual(self.free_event.timing_status, 'UPCOMING')
+
+        # Test API filtering: timeframe=ongoing
+        self.client.force_authenticate(user=self.student)
+        res_ongoing = self.client.get('/api/events/?timeframe=ongoing')
+        self.assertEqual(res_ongoing.status_code, status.HTTP_200_OK)
+        ids_ongoing = [e['id'] for e in (res_ongoing.data.get('results') or res_ongoing.data)]
+        self.assertIn(ongoing_event.id, ids_ongoing)
+        self.assertNotIn(self.free_event.id, ids_ongoing)
+
+        # Test API filtering: timeframe=upcoming
+        res_upcoming = self.client.get('/api/events/?timeframe=upcoming')
+        self.assertEqual(res_upcoming.status_code, status.HTTP_200_OK)
+        ids_upcoming = [e['id'] for e in (res_upcoming.data.get('results') or res_upcoming.data)]
+        self.assertIn(self.free_event.id, ids_upcoming)
+        self.assertNotIn(ongoing_event.id, ids_upcoming)
+
+        # Test API filtering: timeframe=completed
+        res_completed = self.client.get('/api/events/?timeframe=completed')
+        self.assertEqual(res_completed.status_code, status.HTTP_200_OK)
+        ids_completed = [e['id'] for e in (res_completed.data.get('results') or res_completed.data)]
+        self.assertIn(completed_event.id, ids_completed)

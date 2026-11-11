@@ -19,7 +19,7 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
         status_param = self.request.query_params.get('status')
 
         # Allow detail actions to locate the registration before checking permission
-        if self.action in ['approve', 'reject']:
+        if self.action in ['approve', 'reject', 'cancel']:
             return EventRegistration.objects.all().select_related('event', 'user', 'event__venue')
 
         if (user.role == 'ADMIN' or user.is_superuser) and scope == 'admin':
@@ -232,11 +232,67 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def cancel(self, request, pk=None):
         registration = self.get_object()
+        user = request.user
+
+        # Ensure only the attendee themselves or an admin can cancel
+        if not (registration.user == user or user.role == 'ADMIN' or user.is_superuser):
+            return Response({'error': 'You do not have permission to cancel this registration.'}, status=status.HTTP_403_FORBIDDEN)
+
         if registration.status == 'CANCELLED':
-            return Response({'message': 'Registration is already cancelled.'})
+            return Response({'message': 'Registration is already cancelled.', 'status': 'CANCELLED'})
+
+        event_title = registration.event.title
         registration.status = 'CANCELLED'
         registration.save()
-        return Response({'message': 'Registration successfully cancelled.'})
+
+        # Notify student
+        Notification.objects.create(
+            user=registration.user,
+            title="Registration Cancelled ❌",
+            message=f"Your registration for '{event_title}' has been successfully cancelled. Your seat has been released.",
+            category='REGISTRATION',
+            link=f"/events/{registration.event.id}"
+        )
+
+        return Response({
+            'message': f"Registration for '{event_title}' successfully cancelled.",
+            'registration_id': registration.id,
+            'status': 'CANCELLED'
+        })
+
+    @action(detail=False, methods=['post'], url_path='cancel_by_event')
+    def cancel_by_event(self, request):
+        event_id = request.data.get('event_id') or request.data.get('event')
+        if not event_id:
+            return Response({'error': 'Event ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        registration = EventRegistration.objects.filter(
+            event_id=event_id,
+            user=request.user,
+            status__in=['CONFIRMED', 'PENDING']
+        ).first()
+
+        if not registration:
+            return Response({'error': 'No active registration found for this event.'}, status=status.HTTP_404_NOT_FOUND)
+
+        event_title = registration.event.title
+        registration.status = 'CANCELLED'
+        registration.save()
+
+        # Send notification to student
+        Notification.objects.create(
+            user=request.user,
+            title="Registration Cancelled ❌",
+            message=f"You have successfully unregistered from '{event_title}'. Your reserved seat has been released.",
+            category='REGISTRATION',
+            link=f"/events/{event_id}"
+        )
+
+        return Response({
+            'message': f"You have successfully unregistered from '{event_title}'.",
+            'registration_id': registration.id,
+            'status': 'CANCELLED'
+        }, status=status.HTTP_200_OK)
 
 class SavedEventViewSet(viewsets.ModelViewSet):
     serializer_class = SavedEventSerializer
