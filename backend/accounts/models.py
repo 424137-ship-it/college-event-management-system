@@ -36,6 +36,7 @@ class User(AbstractUser):
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     avatar_url = models.URLField(blank=True)
     is_active_user = models.BooleanField(default=True)
+    is_approved = models.BooleanField(default=True, help_text="Designates whether this organizer registration has been approved by admin.")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

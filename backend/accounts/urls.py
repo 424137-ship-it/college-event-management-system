@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     CustomTokenObtainPairView, RegisterView, UserProfileView,
     DepartmentViewSet, FacultyViewSet, AdminUserManagementView, AdminToggleUserStatusView,
+    AdminApproveOrganizerView, AdminRejectOrganizerView,
     PublicUserProfileView, LoginOTPRequestView, LoginOTPVerifyView, LoginOTPResendView
 )
 
@@ -22,5 +23,7 @@ urlpatterns = [
     path('users/<int:user_id>/public_profile/', PublicUserProfileView.as_view(), name='public_user_profile'),
     path('admin/users/', AdminUserManagementView.as_view(), name='admin_users_list'),
     path('admin/users/<int:user_id>/toggle-status/', AdminToggleUserStatusView.as_view(), name='admin_toggle_user_status'),
+    path('admin/organizers/<int:user_id>/approve/', AdminApproveOrganizerView.as_view(), name='admin_approve_organizer'),
+    path('admin/organizers/<int:user_id>/reject/', AdminRejectOrganizerView.as_view(), name='admin_reject_organizer'),
     path('', include(router.urls)),
 ]

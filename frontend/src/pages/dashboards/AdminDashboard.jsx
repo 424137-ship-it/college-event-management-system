@@ -14,12 +14,13 @@ export const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState(null);
   const [pendingEvents, setPendingEvents] = useState([]);
+  const [pendingOrganizers, setPendingOrganizers] = useState([]);
   const [allEvents, setAllEvents] = useState([]);
   const [clubs, setClubs] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [recentLogs, setRecentLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [userRoleFilter, setUserRoleFilter] = useState('STUDENT');
+  const [userRoleFilter, setUserRoleFilter] = useState('ALL');
   const [userSearch, setUserSearch] = useState('');
   const [eventSearch, setEventSearch] = useState('');
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
@@ -41,6 +42,7 @@ export const AdminDashboard = () => {
       ]);
       setStats(adminStatsRes.data.stats);
       setPendingEvents(adminStatsRes.data.pending_events || []);
+      setPendingOrganizers(adminStatsRes.data.pending_organizers || []);
       setRecentLogs(adminStatsRes.data.recent_logs || []);
       setAllUsers(usersRes.data.results || usersRes.data || []);
       setAllEvents(eventsRes.data.results || eventsRes.data || []);
@@ -95,6 +97,46 @@ export const AdminDashboard = () => {
     }
   };
 
+  const handleApproveOrganizer = async (userId, username) => {
+    try {
+      const res = await reportsAPI.approveOrganizer(userId);
+      toast.success(res.data.message || `Organizer '${username}' approved! Notification email dispatched.`);
+      setPendingOrganizers((prev) => prev.filter((o) => o.id !== userId));
+      setAllUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, is_approved: true, is_active_user: true } : u))
+      );
+      if (stats) {
+        setStats({
+          ...stats,
+          pending_organizers_count: Math.max(0, (stats.pending_organizers_count || 1) - 1),
+        });
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to approve organizer.');
+    }
+  };
+
+  const handleRejectOrganizer = async (userId, username) => {
+    const reason = window.prompt(`Provide reason for rejecting registration of organizer '${username}':`, 'Incomplete club authorization');
+    if (reason === null) return;
+    try {
+      const res = await reportsAPI.rejectOrganizer(userId, { reason });
+      toast.info(res.data.message || `Organizer '${username}' registration rejected.`);
+      setPendingOrganizers((prev) => prev.filter((o) => o.id !== userId));
+      setAllUsers((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, is_approved: false, is_active_user: false } : u))
+      );
+      if (stats) {
+        setStats({
+          ...stats,
+          pending_organizers_count: Math.max(0, (stats.pending_organizers_count || 1) - 1),
+        });
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to reject organizer.');
+    }
+  };
+
   const handleToggleUserStatus = async (userId) => {
     try {
       const res = await reportsAPI.toggleUserStatus(userId);
@@ -108,10 +150,16 @@ export const AdminDashboard = () => {
   };
 
   const filteredUsers = allUsers.filter((u) => {
-    const matchesRole = userRoleFilter === 'ALL' || u.role === userRoleFilter;
-    const matchesSearch = u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
-                          u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
-                          (u.first_name && u.first_name.toLowerCase().includes(userSearch.toLowerCase()));
+    let matchesRole = true;
+    if (userRoleFilter === 'PENDING_ORGANIZERS') {
+      matchesRole = u.role === 'ORGANIZER' && !u.is_approved;
+    } else if (userRoleFilter !== 'ALL') {
+      matchesRole = u.role === userRoleFilter;
+    }
+    const matchesSearch =
+      u.username.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+      (u.first_name && u.first_name.toLowerCase().includes(userSearch.toLowerCase()));
     return matchesRole && matchesSearch;
   });
 
@@ -215,6 +263,103 @@ export const AdminDashboard = () => {
                 {stats.pending_approvals}
               </p>
             </div>
+
+            <div
+              className="glass-panel"
+              style={{
+                padding: 22,
+                background: '#FFFFFF',
+                border: (stats.pending_organizers_count || 0) > 0 ? '1.5px solid #F59E0B' : '1px solid var(--soft-border)',
+              }}
+            >
+              <span style={{ fontSize: '0.85rem', color: 'var(--muted-text)', fontWeight: 600 }}>Pending Organizers</span>
+              <p
+                style={{
+                  fontSize: '2.2rem',
+                  fontWeight: 800,
+                  color: (stats.pending_organizers_count || 0) > 0 ? '#D97706' : '#10B981',
+                  marginTop: 4,
+                }}
+              >
+                {stats.pending_organizers_count || 0}
+              </p>
+            </div>
+          </div>
+
+          {/* Pending Organizer Registrations Requiring Review */}
+          <div className="glass-panel" style={{ padding: 28, background: '#FFFFFF' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <div>
+                <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>
+                  Organizer Registrations Pending Approval ({pendingOrganizers.length})
+                </h3>
+                <p style={{ fontSize: '0.85rem', color: 'var(--muted-text)', margin: '4px 0 0 0' }}>
+                  New organizers must be approved once. Once approved, they can log in anytime with just their email OTP.
+                </p>
+              </div>
+            </div>
+
+            {pendingOrganizers.length === 0 ? (
+              <p style={{ color: 'var(--muted-text)', margin: 0 }}>
+                All organizer registrations have been reviewed. No pending approvals.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {pendingOrganizers.map((org) => (
+                  <div
+                    key={org.id}
+                    style={{
+                      padding: 18,
+                      borderRadius: 16,
+                      background: '#FFFBEB',
+                      border: '1px solid #FDE68A',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: 14,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                        <span className="badge badge-amber" style={{ fontWeight: 800 }}>
+                          PENDING ORGANIZER
+                        </span>
+                        <span style={{ fontSize: '0.82rem', color: 'var(--muted-text)' }}>
+                          Registered: {org.created_at ? new Date(org.created_at).toLocaleDateString() : 'Recent'}
+                        </span>
+                      </div>
+                      <h4 style={{ fontSize: '1.1rem', fontWeight: 700, margin: '2px 0 4px 0' }}>
+                        {org.first_name || org.last_name ? `${org.first_name} ${org.last_name}` : org.username}
+                        <span style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--muted-text)', marginLeft: 8 }}>
+                          (@{org.username})
+                        </span>
+                      </h4>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--muted-text)', margin: 0 }}>
+                        <strong>Email:</strong> {org.email} &bull; <strong>Organization:</strong> {org.organizer_profile?.organization_name || 'N/A'} ({org.organizer_profile?.designation || 'Lead'}) &bull; <strong>Dept:</strong> {org.organizer_profile?.department_name || 'Campus Wide'}
+                      </p>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button
+                        onClick={() => handleApproveOrganizer(org.id, org.username)}
+                        className="btn-primary"
+                        style={{ padding: '8px 16px', fontSize: '0.85rem', background: '#16A34A', display: 'flex', alignItems: 'center', gap: 6 }}
+                      >
+                        <Check size={16} /> Approve Organizer
+                      </button>
+                      <button
+                        onClick={() => handleRejectOrganizer(org.id, org.username)}
+                        className="btn-secondary"
+                        style={{ padding: '8px 16px', fontSize: '0.85rem', color: '#DC2626', display: 'flex', alignItems: 'center', gap: 6 }}
+                      >
+                        <X size={16} /> Reject
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Pending Approvals list */}
@@ -510,9 +655,10 @@ export const AdminDashboard = () => {
               <select
                 value={userRoleFilter}
                 onChange={(e) => setUserRoleFilter(e.target.value)}
-                style={{ padding: '8px 14px', borderRadius: 10, border: '1px solid var(--soft-border)' }}
+                style={{ padding: '8px 14px', borderRadius: 10, border: '1px solid var(--soft-border)', fontWeight: 600 }}
               >
                 <option value="ALL">All Roles</option>
+                <option value="PENDING_ORGANIZERS">Pending Organizers ⏳</option>
                 <option value="STUDENT">Students</option>
                 <option value="ORGANIZER">Organizers</option>
                 <option value="ADMIN">Admins</option>
@@ -536,6 +682,7 @@ export const AdminDashboard = () => {
                   <th style={{ padding: '12px' }}>Role</th>
                   <th style={{ padding: '12px' }}>Email</th>
                   <th style={{ padding: '12px' }}>Roll / Organization</th>
+                  <th style={{ padding: '12px' }}>Approval</th>
                   <th style={{ padding: '12px' }}>Status</th>
                   <th style={{ padding: '12px' }}>Action</th>
                 </tr>
@@ -552,18 +699,46 @@ export const AdminDashboard = () => {
                       {u.student_profile?.roll_number || u.organizer_profile?.organization_name || 'N/A'}
                     </td>
                     <td style={{ padding: '12px' }}>
+                      {u.role === 'ORGANIZER' ? (
+                        u.is_approved ? (
+                          <span className="badge badge-green" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <Check size={12} /> Approved
+                          </span>
+                        ) : (
+                          <span className="badge badge-amber" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <Clock size={12} /> Pending Approval
+                          </span>
+                        )
+                      ) : (
+                        <span style={{ color: 'var(--muted-text)', fontSize: '0.8rem' }}>Pre-Approved</span>
+                      )}
+                    </td>
+                    <td style={{ padding: '12px' }}>
                       <span className={`badge ${u.is_active_user ? 'badge-green' : 'badge-red'}`}>
                         {u.is_active_user ? 'Active' : 'Deactivated'}
                       </span>
                     </td>
                     <td style={{ padding: '12px' }}>
-                      <button
-                        onClick={() => handleToggleUserStatus(u.id)}
-                        className="btn-secondary"
-                        style={{ padding: '6px 12px', fontSize: '0.8rem', color: u.is_active_user ? '#DC2626' : '#16A34A' }}
-                      >
-                        {u.is_active_user ? 'Deactivate' : 'Activate'}
-                      </button>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {u.role === 'ORGANIZER' && !u.is_approved && (
+                          <button
+                            type="button"
+                            onClick={() => handleApproveOrganizer(u.id, u.username)}
+                            className="btn-primary"
+                            style={{ padding: '6px 12px', fontSize: '0.8rem', background: '#16A34A', display: 'flex', alignItems: 'center', gap: 4 }}
+                            title="Approve organizer registration"
+                          >
+                            <Check size={12} /> Approve
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleToggleUserStatus(u.id)}
+                          className="btn-secondary"
+                          style={{ padding: '6px 12px', fontSize: '0.8rem', color: u.is_active_user ? '#DC2626' : '#16A34A' }}
+                        >
+                          {u.is_active_user ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

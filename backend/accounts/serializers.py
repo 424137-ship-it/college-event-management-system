@@ -39,10 +39,10 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'first_name', 'last_name',
-            'role', 'phone', 'avatar', 'avatar_url', 'is_active_user',
+            'role', 'phone', 'avatar', 'avatar_url', 'is_active_user', 'is_approved',
             'student_profile', 'organizer_profile', 'created_at'
         ]
-        read_only_fields = ['id', 'role', 'is_active_user', 'created_at']
+        read_only_fields = ['id', 'role', 'is_active_user', 'is_approved', 'created_at']
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
@@ -98,6 +98,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 role=User.ADMIN,
                 is_staff=True,
                 is_superuser=True,
+                is_approved=True,
             )
             user.set_password(password)
             user.save()
@@ -121,6 +122,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 role=User.ORGANIZER,
                 is_staff=False,
                 is_superuser=False,
+                is_approved=False,  # Organizer registration requires administrator approval
             )
             user.set_password(password)
             user.save()
@@ -145,6 +147,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 role=User.STUDENT,
                 is_staff=False,
                 is_superuser=False,
+                is_approved=True,
             )
             user.set_password(password)
             user.save()
@@ -173,5 +176,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         user = self.user
         if not user.is_active_user or not user.is_active:
             raise serializers.ValidationError("This account has been deactivated. Please contact campus admin.")
+        if user.role == User.ORGANIZER and not getattr(user, 'is_approved', True):
+            raise serializers.ValidationError("Your organizer registration is pending administrative approval. Once approved, you can log in directly using your email OTP.")
         data['user'] = UserSerializer(user).data
         return data

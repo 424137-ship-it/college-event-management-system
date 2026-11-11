@@ -57,6 +57,12 @@ class LoginOTPRequestView(APIView):
         if not user.is_active:
             return Response({'error': 'Your account is currently disabled. Please contact administration.'}, status=status.HTTP_403_FORBIDDEN)
 
+        # Enforce administrative approval for organizers
+        if user.role == User.ORGANIZER and not getattr(user, 'is_approved', True):
+            return Response({
+                'error': 'Your organizer account is pending administrator approval. Once approved, you can log in directly using your email OTP. No further permission will be needed.'
+            }, status=status.HTTP_403_FORBIDDEN)
+
         # Invalidate any previous unused OTPs for this user
         EmailOTP.objects.filter(user=user, is_used=False).update(is_used=True)
 
@@ -245,7 +251,53 @@ class RegisterView(generics.CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        # Send welcome notification email
+        # Handle pending approval for organizers
+        if user.role == User.ORGANIZER and not user.is_approved:
+            if user.email:
+                try:
+                    send_mail(
+                        subject="NIT Event Portal • Organizer Registration Received (Pending Review) 📋",
+                        message=(
+                            f"Hello {user.get_full_name() or user.username},\n\n"
+                            f"Thank you for registering as an Event Organizer for National Institute of Technology (NIT).\n\n"
+                            f"Your account registration has been submitted and is currently pending verification by campus administration.\n"
+                            f"Organization: {getattr(user, 'organizer_profile', None).organization_name if hasattr(user, 'organizer_profile') else 'Club / Organization'}\n\n"
+                            f"Once approved, you can log in directly using your credentials and email OTP. No further permission is needed!\n\n"
+                            f"Regards,\nNational Institute of Technology Campus Team"
+                        ),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=True
+                    )
+                except Exception:
+                    pass
+
+                try:
+                    org_name = getattr(user, 'organizer_profile', None).organization_name if hasattr(user, 'organizer_profile') else 'N/A'
+                    send_mail(
+                        subject=f"[NIT Admin] New Organizer Registration Pending Approval: {user.username}",
+                        message=(
+                            f"A new event organizer has registered and is awaiting administrator approval:\n\n"
+                            f"Username: {user.username}\n"
+                            f"Name: {user.get_full_name() or user.username}\n"
+                            f"Email: {user.email}\n"
+                            f"Organization: {org_name}\n\n"
+                            f"Please review and approve this registration in the Admin Dashboard at http://localhost:5173/admin\n"
+                        ),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=['harshax000@gmail.com'],
+                        fail_silently=True
+                    )
+                except Exception:
+                    pass
+
+            return Response({
+                'message': 'Organizer registration submitted successfully! Your account is pending administrator approval. Once approved, you can log in directly using your email OTP.',
+                'pending_approval': True,
+                'user': UserSerializer(user, context={'request': request}).data
+            }, status=status.HTTP_201_CREATED)
+
+        # Standard student or admin welcome email
         if user.email:
             try:
                 recipients = [user.email]
@@ -271,7 +323,8 @@ class RegisterView(generics.CreateAPIView):
 
         return Response({
             'message': 'Registration successful! You can now log in with your credentials.',
-            'user': UserSerializer(user).data
+            'pending_approval': False,
+            'user': UserSerializer(user, context={'request': request}).data
         }, status=status.HTTP_201_CREATED)
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
@@ -330,10 +383,15 @@ class AdminUserManagementView(APIView):
 
     def get(self, request):
         role_filter = request.query_params.get('role')
+        approval_status = request.query_params.get('approval_status')
         queryset = User.objects.all().order_by('-date_joined')
-        if role_filter:
+        if role_filter and role_filter != 'ALL':
             queryset = queryset.filter(role=role_filter)
-        serializer = UserSerializer(queryset, many=True)
+        if approval_status == 'pending':
+            queryset = queryset.filter(role=User.ORGANIZER, is_approved=False)
+        elif approval_status == 'approved':
+            queryset = queryset.filter(is_approved=True)
+        serializer = UserSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data)
 
 class AdminToggleUserStatusView(APIView):
@@ -351,6 +409,109 @@ class AdminToggleUserStatusView(APIView):
             })
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class AdminApproveOrganizerView(APIView):
+    permission_classes = [IsAdminUserRole]
+
+    def post(self, request, user_id):
+        try:
+            target_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if target_user.role != User.ORGANIZER:
+            return Response({'error': 'Selected user is not an organizer.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        target_user.is_approved = True
+        target_user.is_active_user = True
+        target_user.is_active = True
+        target_user.save()
+
+        if hasattr(target_user, 'organizer_profile'):
+            target_user.organizer_profile.verified = True
+            target_user.organizer_profile.save()
+
+        # Dispatched approval confirmation email
+        if target_user.email:
+            try:
+                recipients = [target_user.email]
+                if 'harshax000@gmail.com' not in [r.lower() for r in recipients]:
+                    recipients.append('harshax000@gmail.com')
+                send_mail(
+                    subject="NIT Event Portal • Your Organizer Registration Has Been Approved! 🎉",
+                    message=(
+                        f"Hello {target_user.get_full_name() or target_user.username},\n\n"
+                        f"Great news! Your organizer account for National Institute of Technology (NIT) has been approved by the Administration.\n\n"
+                        f"You can now sign in at http://localhost:5173/login using your credentials and email OTP verification.\n"
+                        f"No further permission is required to access your organizer dashboard and create events.\n\n"
+                        f"Welcome aboard,\nNational Institute of Technology Campus Team"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=recipients,
+                    fail_silently=True
+                )
+            except Exception as e:
+                print(f"[EMAIL ERROR] {e}")
+
+        # System audit log
+        try:
+            from events.models import ActivityLog
+            ActivityLog.objects.create(
+                user=request.user,
+                action='ORGANIZER_APPROVED',
+                details=f"Admin {request.user.username} approved organizer {target_user.username} ({target_user.email})"
+            )
+        except Exception:
+            pass
+
+        return Response({
+            'message': f"Organizer '{target_user.username}' has been approved successfully! Confirmation email dispatched.",
+            'user': UserSerializer(target_user, context={'request': request}).data
+        }, status=status.HTTP_200_OK)
+
+class AdminRejectOrganizerView(APIView):
+    permission_classes = [IsAdminUserRole]
+
+    def post(self, request, user_id):
+        reason = request.data.get('reason', 'Administrative review decision').strip()
+        try:
+            target_user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if target_user.role != User.ORGANIZER:
+            return Response({'error': 'Selected user is not an organizer.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        target_user.is_approved = False
+        target_user.is_active_user = False
+        target_user.is_active = False
+        target_user.save()
+
+        if hasattr(target_user, 'organizer_profile'):
+            target_user.organizer_profile.verified = False
+            target_user.organizer_profile.save()
+
+        if target_user.email:
+            try:
+                send_mail(
+                    subject="NIT Event Portal • Organizer Registration Update",
+                    message=(
+                        f"Hello {target_user.get_full_name() or target_user.username},\n\n"
+                        f"Your organizer registration request for National Institute of Technology could not be approved at this time.\n"
+                        f"Reason: {reason}\n\n"
+                        f"Regards,\nNational Institute of Technology Campus Team"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[target_user.email, 'harshax000@gmail.com'],
+                    fail_silently=True
+                )
+            except Exception:
+                pass
+
+        return Response({
+            'message': f"Organizer '{target_user.username}' registration rejected.",
+            'user': UserSerializer(target_user, context={'request': request}).data
+        }, status=status.HTTP_200_OK)
 
 class PublicUserProfileView(APIView):
     permission_classes = [permissions.AllowAny]

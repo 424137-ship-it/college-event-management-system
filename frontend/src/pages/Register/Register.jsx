@@ -251,22 +251,26 @@ export const Register = () => {
         {selectedRole === 'ORGANIZER' && (
           <div
             style={{
-              padding: '12px 16px',
-              background: '#F0FDF4',
-              border: '1px solid #BBF7D0',
+              padding: '14px 18px',
+              background: '#EFF6FF',
+              border: '1.5px solid #93C5FD',
               borderRadius: 14,
               marginBottom: 20,
-              fontSize: '0.85rem',
-              color: '#166534',
+              fontSize: '0.86rem',
+              color: '#1E40AF',
               display: 'flex',
-              alignItems: 'center',
-              gap: 10,
+              alignItems: 'flex-start',
+              gap: 12,
             }}
           >
-            <Building2 size={20} style={{ flexShrink: 0 }} />
-            <span>
-              <strong>Organizer Account:</strong> Host and manage college events, create your own clubs and department associations, and monitor live attendance.
-            </span>
+            <ShieldCheck size={22} style={{ flexShrink: 0, color: '#2563EB', marginTop: 2 }} />
+            <div>
+              <p style={{ fontWeight: 800, margin: '0 0 4px 0', color: '#1E3A8A' }}>One-Time Admin Approval Required</p>
+              <p style={{ margin: 0, lineHeight: 1.45, color: '#1E40AF' }}>
+                New organizer registrations require one-time administrative review by NIT Administration before first access.
+                <strong> Once approved, no permission is needed again for login</strong>—you will sign in directly using just your email OTP verification code!
+              </p>
+            </div>
           </div>
         )}
 

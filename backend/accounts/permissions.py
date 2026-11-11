@@ -9,10 +9,16 @@ class IsAdminUserRole(permissions.BasePermission):
 
 class IsOrganizerUserRole(permissions.BasePermission):
     """
-    Allows access to Organizers and Admins.
+    Allows access to approved Organizers and Admins.
     """
     def has_permission(self, request, view):
-        return bool(request.user and request.user.is_authenticated and (request.user.role in ['ORGANIZER', 'ADMIN'] or request.user.is_superuser))
+        if not (request.user and request.user.is_authenticated):
+            return False
+        if request.user.role == 'ADMIN' or request.user.is_superuser:
+            return True
+        if request.user.role == 'ORGANIZER':
+            return getattr(request.user, 'is_approved', True)
+        return False
 
 class IsStudentUserRole(permissions.BasePermission):
     """

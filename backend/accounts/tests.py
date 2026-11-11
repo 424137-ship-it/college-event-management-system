@@ -242,6 +242,11 @@ class HarshaXComprehensiveIntegrationTests(TestCase):
         self.assertEqual(reg_response.status_code, status.HTTP_201_CREATED)
         org_user = User.objects.get(username='lead_org')
         self.assertEqual(org_user.role, 'ORGANIZER')
+        self.assertFalse(org_user.is_approved)
+
+        # Admin approves the registered organizer
+        org_user.is_approved = True
+        org_user.save()
 
         # Organizer establishes a new club
         self.client.force_authenticate(user=org_user)
@@ -420,4 +425,77 @@ class HarshaXComprehensiveIntegrationTests(TestCase):
             'otp': otp_code
         })
         self.assertEqual(reuse_res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_organizer_registration_approval_and_login_flow(self):
+        """
+        Verify that:
+        1. New organizer registers with is_approved=False.
+        2. Attempting to login before approval returns 403 Forbidden.
+        3. Admin approves organizer via /api/admin/organizers/<id>/approve/.
+        4. Once approved, organizer can log in with OTP without needing further permissions.
+        """
+        # 1. Organizer registers
+        reg_res = self.client.post('/api/auth/register/', {
+            'username': 'new_organizer',
+            'email': 'new_org@nit.ac.in',
+            'password': 'password123',
+            'first_name': 'Club',
+            'last_name': 'Lead',
+            'role': 'ORGANIZER',
+            'organization_name': 'Robotics Club',
+            'designation': 'President'
+        })
+        self.assertEqual(reg_res.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(reg_res.data.get('pending_approval'))
+        self.assertIn('pending administrator approval', reg_res.data.get('message', '').lower())
+
+        org_user = User.objects.get(username='new_organizer')
+        self.assertEqual(org_user.role, User.ORGANIZER)
+        self.assertFalse(org_user.is_approved)
+        self.assertFalse(org_user.organizer_profile.verified)
+
+        # 2. Organizer attempts to login before admin approval -> 403 Forbidden
+        login_res_pending = self.client.post('/api/auth/login-otp-request/', {
+            'username': 'new_organizer',
+            'password': 'password123'
+        })
+        self.assertEqual(login_res_pending.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn('pending administrator approval', login_res_pending.data.get('error', '').lower())
+
+        # 3. Admin approves organizer
+        self.client.force_authenticate(user=self.admin)
+        approve_res = self.client.post(f'/api/admin/organizers/{org_user.id}/approve/')
+        self.assertEqual(approve_res.status_code, status.HTTP_200_OK)
+
+        org_user.refresh_from_db()
+        self.assertTrue(org_user.is_approved)
+        self.assertTrue(org_user.organizer_profile.verified)
+
+        # 4. Now organizer logs in -> receives OTP directly without any permission required
+        self.client.force_authenticate(user=None)
+        login_res_approved = self.client.post('/api/auth/login-otp-request/', {
+            'username': 'new_organizer',
+            'password': 'password123'
+        })
+        self.assertEqual(login_res_approved.status_code, status.HTTP_200_OK)
+        self.assertTrue(login_res_approved.data.get('otp_required'))
+        otp = login_res_approved.data.get('demo_otp')
+        self.assertIsNotNone(otp)
+
+        # Verify OTP
+        verify_res = self.client.post('/api/auth/login-otp-verify/', {
+            'username': 'new_organizer',
+            'otp': otp
+        })
+        self.assertEqual(verify_res.status_code, status.HTTP_200_OK)
+        self.assertIn('access', verify_res.data)
+        self.assertEqual(verify_res.data['user']['role'], 'ORGANIZER')
+
+        # 5. Subsequent login: no permission needed again, just OTP
+        subsequent_login = self.client.post('/api/auth/login-otp-request/', {
+            'username': 'new_organizer',
+            'password': 'password123'
+        })
+        self.assertEqual(subsequent_login.status_code, status.HTTP_200_OK)
+        self.assertTrue(subsequent_login.data.get('otp_required'))
 

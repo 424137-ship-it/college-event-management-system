@@ -155,6 +155,12 @@ class AdminDashboardStatsView(APIView):
         from events.serializers import EventListSerializer
         pending_events_data = EventListSerializer(pending_events_qs, many=True).data
 
+        # Pending organizer registrations awaiting review
+        pending_organizers_qs = User.objects.filter(role=User.ORGANIZER, is_approved=False).select_related('organizer_profile', 'organizer_profile__department')
+        pending_organizers_count = pending_organizers_qs.count()
+        from accounts.serializers import UserSerializer
+        pending_organizers_data = UserSerializer(pending_organizers_qs[:20], many=True, context={'request': request}).data
+
         # Category analytics
         category_stats = EventCategory.objects.annotate(
             total_events=Count('events')
@@ -172,11 +178,13 @@ class AdminDashboardStatsView(APIView):
                 'total_clubs': total_clubs,
                 'total_events': total_events,
                 'pending_approvals': pending_approvals,
+                'pending_organizers_count': pending_organizers_count,
                 'completed_events': completed_events,
                 'total_registrations': total_registrations,
                 'total_attendance': total_attendance,
             },
             'pending_events': pending_events_data,
+            'pending_organizers': pending_organizers_data,
             'category_stats': list(category_stats),
             'recent_logs': logs_data,
         })

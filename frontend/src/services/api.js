@@ -152,6 +152,8 @@ export const reportsAPI = {
   getAdminStats: () => api.get('/stats/admin/'),
   getAdminUsers: (params) => api.get('/admin/users/', { params }),
   toggleUserStatus: (userId) => api.post(`/admin/users/${userId}/toggle-status/`),
+  approveOrganizer: (userId) => api.post(`/admin/organizers/${userId}/approve/`),
+  rejectOrganizer: (userId, data = {}) => api.post(`/admin/organizers/${userId}/reject/`, data),
   getAdminLogs: () => api.get('/admin/logs/'),
 };
 
