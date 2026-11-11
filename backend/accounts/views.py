@@ -63,7 +63,7 @@ class LoginOTPRequestView(APIView):
         # Generate a secure 6-digit OTP
         otp_code = f"{random.randint(100000, 999999):06d}"
         expires_at = timezone.now() + datetime.timedelta(minutes=5)
-        target_email = user.email if user.email else 'harshax00@gmail.com'
+        target_email = user.email if user.email else 'harshax000@gmail.com'
 
         EmailOTP.objects.create(
             user=user,
@@ -191,7 +191,7 @@ class LoginOTPResendView(APIView):
 
         otp_code = f"{random.randint(100000, 999999):06d}"
         expires_at = timezone.now() + datetime.timedelta(minutes=5)
-        target_email = user.email if user.email else 'harshax00@gmail.com'
+        target_email = user.email if user.email else 'harshax000@gmail.com'
 
         EmailOTP.objects.create(
             user=user,
