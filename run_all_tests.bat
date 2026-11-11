@@ -28,7 +28,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 echo.
 
-echo [PHASE 3/3] Running Java JUnit 5 Business Logic Test Suite...
+echo [PHASE 3/4] Running Java JUnit 5 Business Logic Test Suite...
 echo ------------------------------------------------------------------------
 cd /d "%~dp0junit_tests"
 java test.CollegeEventSystemTest
@@ -39,8 +39,19 @@ if %ERRORLEVEL% NEQ 0 (
 )
 echo.
 
+echo [PHASE 4/4] Running Automated REST API Test Suite (15 Endpoints)...
+echo ------------------------------------------------------------------------
+cd /d "%~dp0api_tests"
+python test_api_endpoints.py
+if %ERRORLEVEL% NEQ 0 (
+    echo [ERROR] API tests encountered issues.
+) else (
+    echo [SUCCESS] Automated REST API Tests Passed.
+)
+echo.
+
 echo ========================================================================
-echo          ALL THREE TESTING TOOLS COMPLETED SUCCESSFULLY!
+echo          ALL FOUR TESTING SUITES COMPLETED SUCCESSFULLY!
 echo ========================================================================
 cd /d "%~dp0"
 pause

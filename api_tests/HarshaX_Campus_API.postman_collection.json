@@ -1,0 +1,322 @@
+{
+  "info": {
+    "name": "HarshaX NIT College Event Management System API",
+    "_postman_id": "c7a8b9e1-2345-4678-9abc-def012345678",
+    "description": "Comprehensive REST API Test Suite with automated assertions for NIT Event Portal.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "student_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Public Discovery Endpoints",
+      "item": [
+        {
+          "name": "GET Public Events",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/events/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response contains events list', function () {",
+                  "    var json = pm.response.json();",
+                  "    var list = json.results || json;",
+                  "    pm.expect(list).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Active Clubs",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/clubs/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET Public Stats",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/stats/public/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Contains platform metrics', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('total_events');",
+                  "    pm.expect(json).to.have.property('total_students');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2. Two-Factor Authentication (2FA)",
+      "item": [
+        {
+          "name": "Step 1: Request Login OTP (Valid)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"student\",\n  \"password\": \"student123\"\n}"
+            },
+            "url": "{{base_url}}/auth/login-otp-request/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('OTP required is true', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.otp_required).to.eql(true);",
+                  "    pm.collectionVariables.set('latest_otp', json.demo_otp);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Step 1 (Negative): Invalid Credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"student\",\n  \"password\": \"wrong_password\"\n}"
+            },
+            "url": "{{base_url}}/auth/login-otp-request/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401 Unauthorized', function () { pm.response.to.have.status(401); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Step 2: Verify OTP & Issue JWT",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"student\",\n  \"otp\": \"{{latest_otp}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/login-otp-verify/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('JWT token issued', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('access');",
+                  "    pm.collectionVariables.set('student_token', json.access);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Step 2 (Negative): Invalid OTP Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"student\",\n  \"otp\": \"000000\"\n}"
+            },
+            "url": "{{base_url}}/auth/login-otp-verify/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400 Bad Request', function () { pm.response.to.have.status(400); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3. Organizer Approval Workflow",
+      "item": [
+        {
+          "name": "Register Organizer (Requires Approval)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"postman_org_leader\",\n  \"email\": \"postman_org@nit.ac.in\",\n  \"password\": \"SecurePass123!\",\n  \"first_name\": \"Postman\",\n  \"last_name\": \"Lead\",\n  \"role\": \"ORGANIZER\",\n  \"organization_name\": \"Robotics Club\",\n  \"designation\": \"President\"\n}"
+            },
+            "url": "{{base_url}}/auth/register/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201 Created', function () { pm.response.to.have.status(201); });",
+                  "pm.test('Pending approval is true', function () {",
+                  "    var json = pm.response.json();",
+                  "    pm.expect(json.pending_approval).to.eql(true);",
+                  "    pm.expect(json.user.is_approved).to.eql(false);",
+                  "    pm.collectionVariables.set('new_org_id', json.user.id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Pre-Approval Login Denied (403 Forbidden)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"postman_org_leader\",\n  \"password\": \"SecurePass123!\"\n}"
+            },
+            "url": "{{base_url}}/auth/login-otp-request/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () { pm.response.to.have.status(403); });",
+                  "pm.test('Error mentions pending approval', function () {",
+                  "    pm.expect(pm.response.text()).to.include('pending administrator approval');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4. Security & RBAC Enforcement",
+      "item": [
+        {
+          "name": "RBAC: Student Token Blocked from Admin Users (403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{student_token}}"
+              }
+            ],
+            "url": "{{base_url}}/admin/users/"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 403 Forbidden', function () { pm.response.to.have.status(403); });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
