@@ -5,7 +5,7 @@ import {
   Bell, User, Settings, ArrowRight, Download, CheckCircle2, Clock, MapPin, QrCode
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { reportsAPI, registrationsAPI, certificatesAPI, clubsAPI } from '../../services/api';
+import { reportsAPI, registrationsAPI, certificatesAPI, clubsAPI, API_BASE_URL } from '../../services/api';
 import { TicketModal } from '../../components/modals/TicketModal';
 import { toast } from 'react-toastify';
 
@@ -348,7 +348,7 @@ export const StudentDashboard = () => {
                           Verify Publicly
                         </Link>
                         <a
-                          href={`http://127.0.0.1:8000/api/certificates/${cert.id}/download/`}
+                          href={`${API_BASE_URL}/certificates/${cert.id}/download/`}
                           target="_blank"
                           rel="noreferrer"
                           className="btn-primary"

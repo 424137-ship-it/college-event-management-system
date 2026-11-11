@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon, X, Maximize2, Camera, Calendar } from 'lucide-react';
-import { galleryAPI } from '../../services/api';
+import { galleryAPI, BACKEND_URL } from '../../services/api';
 
 export const Gallery = () => {
   const [albums, setAlbums] = useState([]);
@@ -129,7 +129,7 @@ export const Gallery = () => {
               }}
             >
               <img
-                src={img.image_url || (img.image ? `http://127.0.0.1:8000${img.image}` : 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&fit=crop&q=80')}
+                src={img.image_url || (img.image ? `${BACKEND_URL}${img.image}` : 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&fit=crop&q=80')}
                 alt={img.caption || 'Event moment'}
                 style={{
                   width: '100%',
@@ -189,7 +189,7 @@ export const Gallery = () => {
               <X size={20} />
             </button>
             <img
-              src={lightboxImage.image_url || (lightboxImage.image ? `http://127.0.0.1:8000${lightboxImage.image}` : '')}
+              src={lightboxImage.image_url || (lightboxImage.image ? `${BACKEND_URL}${lightboxImage.image}` : '')}
               alt="Lightbox"
               style={{
                 width: '100%',

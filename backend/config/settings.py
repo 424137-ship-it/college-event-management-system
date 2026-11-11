@@ -76,27 +76,46 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database configuration: MySQL with automatic SQLite fallback if MySQL is down
-DB_NAME = os.getenv('DB_NAME', 'campusx_db')
-DB_USER = os.getenv('DB_USER', 'root')
-DB_PASSWORD = os.getenv('DB_PASSWORD', 'harsha@123')
-DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
-DB_PORT = os.getenv('DB_PORT', '3306')
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': DB_NAME,
-        'USER': DB_USER,
-        'PASSWORD': DB_PASSWORD,
-        'HOST': DB_HOST,
-        'PORT': DB_PORT,
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+# Database configuration: MySQL with automatic DATABASE_URL support
+DATABASE_URL = os.getenv('DATABASE_URL')
+if DATABASE_URL:
+    from urllib.parse import urlparse
+    parsed = urlparse(DATABASE_URL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': parsed.path.lstrip('/'),
+            'USER': parsed.username,
+            'PASSWORD': parsed.password,
+            'HOST': parsed.hostname,
+            'PORT': parsed.port or 3306,
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
     }
-}
+else:
+    DB_NAME = os.getenv('DB_NAME', 'campusx_db')
+    DB_USER = os.getenv('DB_USER', 'root')
+    DB_PASSWORD = os.getenv('DB_PASSWORD', 'harsha@123')
+    DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
+    DB_PORT = os.getenv('DB_PORT', '3306')
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
+    }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -148,6 +167,16 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-# CORS Configuration
-CORS_ALLOW_ALL_ORIGINS = True  # Allows smooth local pairing between React and Django
+# CORS & CSRF Configuration
+CORS_ALLOW_ALL_ORIGINS = True  # Allows smooth local and cloud pairing
 CORS_ALLOW_CREDENTIALS = True
+
+csrf_trusted = os.getenv('CSRF_TRUSTED_ORIGINS', '')
+if csrf_trusted:
+    CSRF_TRUSTED_ORIGINS = [orig.strip() for orig in csrf_trusted.split(',') if orig.strip()]
+else:
+    CSRF_TRUSTED_ORIGINS = [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'https://*.vercel.app',
+    ]

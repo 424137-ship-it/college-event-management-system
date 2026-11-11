@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Calendar, MapPin, CheckCircle2, Download, Printer } from 'lucide-react';
 import { Logo } from '../common/Logo';
+import { BACKEND_URL } from '../../services/api';
 
 export const TicketModal = ({ registration, isOpen, onClose }) => {
   if (!isOpen || !registration) return null;
@@ -14,7 +15,7 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
     (registration.qr_code
       ? registration.qr_code.startsWith('http')
         ? registration.qr_code
-        : `http://127.0.0.1:8000${registration.qr_code}`
+        : `${BACKEND_URL}${registration.qr_code}`
       : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=HARSHAX_TICKET:${registration.registration_id}`);
 
   return (
