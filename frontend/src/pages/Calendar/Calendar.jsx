@@ -5,6 +5,7 @@ import {
   Clock, MapPin, ArrowRight, LayoutGrid, List
 } from 'lucide-react';
 import { eventsAPI } from '../../services/api';
+import { FALLBACK_EVENTS } from '../../utils/fallbackData';
 
 export const CalendarPage = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -22,14 +23,27 @@ export const CalendarPage = () => {
       setLoading(true);
       try {
         const res = await eventsAPI.getCalendar({ year, month: month + 1 });
-        const list = res.data.results || res.data || [];
-        setEvents(list);
+        const list = res.data?.results || res.data || [];
+        const finalEvents = list.length > 0 ? list : FALLBACK_EVENTS.map((e) => ({
+          ...e,
+          start_date: e.start_date.split('T')[0],
+          end_date: e.end_date.split('T')[0],
+        }));
+        setEvents(finalEvents);
 
         // Filter events for selectedDateStr
-        const onDay = list.filter((e) => e.start_date === selectedDateStr);
+        const onDay = finalEvents.filter((e) => e.start_date === selectedDateStr);
         setSelectedDayEvents(onDay);
       } catch (err) {
-        console.error('Error fetching calendar events:', err);
+        console.warn('Backend connecting; serving fallback calendar data for NIT AP.', err);
+        const finalEvents = FALLBACK_EVENTS.map((e) => ({
+          ...e,
+          start_date: e.start_date.split('T')[0],
+          end_date: e.end_date.split('T')[0],
+        }));
+        setEvents(finalEvents);
+        const onDay = finalEvents.filter((e) => e.start_date === selectedDateStr);
+        setSelectedDayEvents(onDay);
       } finally {
         setLoading(false);
       }

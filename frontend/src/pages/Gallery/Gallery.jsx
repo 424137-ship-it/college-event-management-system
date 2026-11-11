@@ -2,6 +2,58 @@ import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon, X, Maximize2, Camera, Calendar } from 'lucide-react';
 import { galleryAPI, BACKEND_URL } from '../../services/api';
 
+const FALLBACK_ALBUMS = [
+  { id: 1, title: 'Vulcanzy Socio-Cultural Fest' },
+  { id: 2, title: 'ASCII CodeSprint Hackathon' },
+  { id: 3, title: 'Technodaya Tech Expo' },
+  { id: 4, title: 'Kala Utsav Fine Arts' },
+];
+
+const FALLBACK_IMAGES = [
+  {
+    id: 1,
+    album: 1,
+    image_url: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&fit=crop&q=80',
+    caption: 'Vulcanzy Pro-Night: Star Concert at Central OAT, NIT AP',
+    event_title: 'Vulcanzy 2026',
+  },
+  {
+    id: 2,
+    album: 2,
+    image_url: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&fit=crop&q=80',
+    caption: 'ASCII 24H CodeSprint: Teams debugging algorithmic problems in Labs',
+    event_title: 'ASCII CodeSprint 2026',
+  },
+  {
+    id: 3,
+    album: 1,
+    image_url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&fit=crop&q=80',
+    caption: 'Vulcanzy Choreography Battle: Electrifying live dance performance',
+    event_title: 'Step Up - Dance Night',
+  },
+  {
+    id: 4,
+    album: 3,
+    image_url: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&fit=crop&q=80',
+    caption: 'Technodaya: Autonomous Combat Bot testing in the arena',
+    event_title: 'RoboWars 2026',
+  },
+  {
+    id: 5,
+    album: 4,
+    image_url: 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=800&fit=crop&q=80',
+    caption: 'Kala Utsav: Canvas painting and charcoal sketching exhibition at SAC',
+    event_title: 'Kala Kriti Exhibition',
+  },
+  {
+    id: 6,
+    album: 2,
+    image_url: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&fit=crop&q=80',
+    caption: 'Industry Mentorship session for NIT AP engineering founders',
+    event_title: 'E-Cell Venture Pitch',
+  },
+];
+
 export const Gallery = () => {
   const [albums, setAlbums] = useState([]);
   const [images, setImages] = useState([]);
@@ -13,13 +65,17 @@ export const Gallery = () => {
     const fetchGallery = async () => {
       try {
         const [albumRes, imageRes] = await Promise.all([
-          galleryAPI.getAlbums(),
-          galleryAPI.getImages(),
+          galleryAPI.getAlbums().catch(() => ({ data: [] })),
+          galleryAPI.getImages().catch(() => ({ data: [] })),
         ]);
-        setAlbums(albumRes.data.results || albumRes.data || []);
-        setImages(imageRes.data.results || imageRes.data || []);
+        const albumList = albumRes.data?.results || albumRes.data || [];
+        const imageList = imageRes.data?.results || imageRes.data || [];
+        setAlbums(albumList.length > 0 ? albumList : FALLBACK_ALBUMS);
+        setImages(imageList.length > 0 ? imageList : FALLBACK_IMAGES);
       } catch (err) {
-        console.error('Error fetching gallery:', err);
+        console.warn('Backend connecting; serving fallback gallery for NIT AP.', err);
+        setAlbums(FALLBACK_ALBUMS);
+        setImages(FALLBACK_IMAGES);
       } finally {
         setLoading(false);
       }

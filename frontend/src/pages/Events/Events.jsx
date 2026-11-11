@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Filter, LayoutGrid, List, SlidersHorizontal, Calendar, MapPin, X } from 'lucide-react';
 import { eventsAPI } from '../../services/api';
 import { EventCard } from '../../components/cards/EventCard';
+import { FALLBACK_EVENTS, FALLBACK_CATEGORIES, FALLBACK_VENUES } from '../../utils/fallbackData';
 
 export const Events = () => {
   const [events, setEvents] = useState([]);
@@ -19,17 +20,43 @@ export const Events = () => {
     const loadMetadata = async () => {
       try {
         const [catRes, venRes] = await Promise.all([
-          eventsAPI.getCategories(),
-          eventsAPI.getVenues(),
+          eventsAPI.getCategories().catch(() => ({ data: [] })),
+          eventsAPI.getVenues().catch(() => ({ data: [] })),
         ]);
-        setCategories(catRes.data.results || catRes.data || []);
-        setVenues(venRes.data.results || venRes.data || []);
+        const catList = catRes.data?.results || catRes.data || [];
+        setCategories(catList.length > 0 ? catList : FALLBACK_CATEGORIES);
+
+        const venList = venRes.data?.results || venRes.data || [];
+        setVenues(venList.length > 0 ? venList : FALLBACK_VENUES);
       } catch (err) {
-        console.error('Error loading event metadata:', err);
+        setCategories(FALLBACK_CATEGORIES);
+        setVenues(FALLBACK_VENUES);
       }
     };
     loadMetadata();
   }, []);
+
+  const getFilteredFallbackEvents = (cat, ven, query) => {
+    let list = [...FALLBACK_EVENTS];
+    if (cat) {
+      list = list.filter((e) =>
+        e.category?.toLowerCase() === cat.toLowerCase() ||
+        e.category_name?.toLowerCase() === cat.toLowerCase()
+      );
+    }
+    if (ven) {
+      list = list.filter((e) => e.venue_name?.toLowerCase().includes(ven.toLowerCase()));
+    }
+    if (query) {
+      const q = query.toLowerCase();
+      list = list.filter((e) =>
+        e.title?.toLowerCase().includes(q) ||
+        e.short_description?.toLowerCase().includes(q) ||
+        e.club_name?.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  };
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -44,9 +71,15 @@ export const Events = () => {
         if (searchQuery.trim()) params.search = searchQuery.trim();
 
         const res = await eventsAPI.getAll(params);
-        setEvents(res.data.results || res.data || []);
+        const results = res.data?.results || res.data || [];
+        if (results.length > 0) {
+          setEvents(results);
+        } else {
+          setEvents(getFilteredFallbackEvents(selectedCategory, selectedVenue, searchQuery));
+        }
       } catch (err) {
-        console.error('Error fetching events:', err);
+        console.warn('Backend connecting; serving fallback events for NIT AP campus.', err);
+        setEvents(getFilteredFallbackEvents(selectedCategory, selectedVenue, searchQuery));
       } finally {
         setLoading(false);
       }

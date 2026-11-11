@@ -4,6 +4,7 @@ import { clubsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { ClubCard } from '../../components/cards/ClubCard';
 import { CreateClubModal } from '../../components/modals/CreateClubModal';
+import { FALLBACK_CLUBS } from '../../utils/fallbackData';
 
 export const Clubs = () => {
   const { user, isOrganizer, isAdmin } = useAuth();
@@ -17,9 +18,11 @@ export const Clubs = () => {
     const fetchClubs = async () => {
       try {
         const res = await clubsAPI.getAll();
-        setClubs(res.data.results || res.data || []);
+        const clubList = res.data?.results || res.data || [];
+        setClubs(clubList.length > 0 ? clubList : FALLBACK_CLUBS);
       } catch (err) {
-        console.error('Error fetching clubs:', err);
+        console.warn('Backend connecting; loading NIT Andhra Pradesh clubs showcase.', err);
+        setClubs(FALLBACK_CLUBS);
       } finally {
         setLoading(false);
       }

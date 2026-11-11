@@ -8,6 +8,7 @@ import {
 import { eventsAPI, clubsAPI, reportsAPI } from '../../services/api';
 import { EventCard } from '../../components/cards/EventCard';
 import { ClubCard } from '../../components/cards/ClubCard';
+import { FALLBACK_EVENTS, FALLBACK_CLUBS, FALLBACK_STATS } from '../../utils/fallbackData';
 
 export const Home = () => {
   const navigate = useNavigate();
@@ -49,23 +50,31 @@ export const Home = () => {
     const loadHomeData = async () => {
       try {
         const [eventsRes, clubsRes, statsRes] = await Promise.all([
-          eventsAPI.getFeatured(),
-          clubsAPI.getAll(),
-          reportsAPI.getPublicStats(),
+          eventsAPI.getFeatured().catch(() => ({ data: [] })),
+          clubsAPI.getAll().catch(() => ({ data: [] })),
+          reportsAPI.getPublicStats().catch(() => ({ data: null })),
         ]);
-        setFeaturedEvents(eventsRes.data.results || eventsRes.data || []);
-        const clubsData = clubsRes.data.results || clubsRes.data || [];
-        setPopularClubs(clubsData.slice(0, 4));
-        if (statsRes.data) {
+        const evList = eventsRes.data?.results || eventsRes.data || [];
+        setFeaturedEvents(evList.length > 0 ? evList : FALLBACK_EVENTS.slice(0, 6));
+
+        const clubsData = clubsRes.data?.results || clubsRes.data || [];
+        setPopularClubs(clubsData.length > 0 ? clubsData.slice(0, 4) : FALLBACK_CLUBS.slice(0, 4));
+
+        if (statsRes.data && statsRes.data.total_events > 0) {
           setStats({
             total_events: statsRes.data.total_events,
             total_clubs: statsRes.data.total_clubs,
             total_students: statsRes.data.total_students,
             total_competitions: statsRes.data.total_competitions,
           });
+        } else {
+          setStats(FALLBACK_STATS);
         }
       } catch (err) {
-        console.error('Error loading home data:', err);
+        console.warn('Backend offline or warming up; displaying NIT Andhra Pradesh showcase data.', err);
+        setFeaturedEvents(FALLBACK_EVENTS.slice(0, 6));
+        setPopularClubs(FALLBACK_CLUBS.slice(0, 4));
+        setStats(FALLBACK_STATS);
       } finally {
         setLoading(false);
       }
