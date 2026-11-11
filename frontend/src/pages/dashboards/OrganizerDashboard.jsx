@@ -4,7 +4,7 @@ import {
   LayoutDashboard, PlusCircle, Calendar, Users, QrCode, DollarSign,
   Briefcase, BarChart3, Settings, ArrowRight, CheckCircle2, XCircle,
   Clock, Download, FileSpreadsheet, ShieldAlert, Sparkles, AlertCircle,
-  Edit3, Building2, UserCheck, RefreshCw, Filter
+  Edit3, Building2, UserCheck, RefreshCw, Filter, Camera
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -16,6 +16,7 @@ import {
 } from '../../services/api';
 import { EditEventModal } from '../../components/modals/EditEventModal';
 import { CreateClubModal } from '../../components/modals/CreateClubModal';
+import { UploadGalleryModal } from '../../components/modals/UploadGalleryModal';
 import { toast } from 'react-toastify';
 
 export const OrganizerDashboard = () => {
@@ -60,6 +61,8 @@ export const OrganizerDashboard = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedEventToEdit, setSelectedEventToEdit] = useState(null);
   const [createClubModalOpen, setCreateClubModalOpen] = useState(false);
+  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
+  const [selectedGalleryEventId, setSelectedGalleryEventId] = useState(null);
   const [wizardStep, setWizardStep] = useState(1);
   const [eventFormData, setEventFormData] = useState({
     title: '',
@@ -285,6 +288,17 @@ export const OrganizerDashboard = () => {
 
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <button
+            onClick={() => {
+              setSelectedGalleryEventId(null);
+              setGalleryModalOpen(true);
+            }}
+            className="btn-secondary"
+            style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 8, borderColor: '#2563EB', color: '#2563EB', fontWeight: 700, background: 'rgba(37, 99, 235, 0.05)' }}
+          >
+            <Camera size={18} />
+            Upload Gallery Photos
+          </button>
+          <button
             onClick={() => setCreateClubModalOpen(true)}
             className="btn-secondary"
             style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', gap: 8, borderColor: 'var(--primary-purple)', color: 'var(--primary-purple)', fontWeight: 700 }}
@@ -472,6 +486,27 @@ export const OrganizerDashboard = () => {
                         <Link to={`/events/${ev.id}`} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '0.8rem' }}>
                           View
                         </Link>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedGalleryEventId(ev.id);
+                            setGalleryModalOpen(true);
+                          }}
+                          className="btn-secondary"
+                          style={{
+                            padding: '6px 12px',
+                            fontSize: '0.8rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4,
+                            color: '#2563EB',
+                            borderColor: 'rgba(37, 99, 235, 0.35)',
+                          }}
+                          title="Upload Event Photos to Gallery"
+                        >
+                          <Camera size={13} />
+                          Photos
+                        </button>
                         <button
                           onClick={() => {
                             setSelectedEventToEdit(ev);
@@ -1387,6 +1422,21 @@ export const OrganizerDashboard = () => {
           onClose={() => setCreateClubModalOpen(false)}
           onClubCreated={(newClub) => {
             setClubs((prev) => [newClub, ...prev]);
+          }}
+        />
+      )}
+
+      {/* Upload Event Photos to Gallery Modal */}
+      {galleryModalOpen && (
+        <UploadGalleryModal
+          isOpen={galleryModalOpen}
+          onClose={() => {
+            setGalleryModalOpen(false);
+            setSelectedGalleryEventId(null);
+          }}
+          initialEventId={selectedGalleryEventId}
+          onUploaded={() => {
+            toast.success('Photos published to event gallery!');
           }}
         />
       )}

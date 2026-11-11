@@ -3,13 +3,14 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import {
   Calendar, Clock, MapPin, Users, Bookmark, Share2, CalendarPlus,
-  ShieldCheck, AlertCircle, CheckCircle2, ArrowLeft, ArrowRight, Mail, Phone, User, Edit3, UserMinus
+  ShieldCheck, AlertCircle, CheckCircle2, ArrowLeft, ArrowRight, Mail, Phone, User, Edit3, UserMinus, Camera
 } from 'lucide-react';
 import { eventsAPI, registrationsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { TicketModal } from '../../components/modals/TicketModal';
 import { EditEventModal } from '../../components/modals/EditEventModal';
 import { RegisterConfirmModal } from '../../components/modals/RegisterConfirmModal';
+import { UploadGalleryModal } from '../../components/modals/UploadGalleryModal';
 import { toast } from 'react-toastify';
 import { FALLBACK_EVENTS } from '../../utils/fallbackData';
 
@@ -24,6 +25,7 @@ export const EventDetails = () => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [ticketData, setTicketData] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [galleryModalOpen, setGalleryModalOpen] = useState(false);
   const [unregistering, setUnregistering] = useState(false);
 
   useEffect(() => {
@@ -661,6 +663,28 @@ export const EventDetails = () => {
                   <Edit3 size={16} />
                   Edit Event Details
                 </button>
+
+                <button
+                  onClick={() => setGalleryModalOpen(true)}
+                  className="btn-secondary"
+                  style={{
+                    width: '100%',
+                    marginTop: 8,
+                    padding: '12px',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    color: '#2563EB',
+                    borderColor: 'rgba(37, 99, 235, 0.35)',
+                    background: 'rgba(37, 99, 235, 0.05)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                  }}
+                >
+                  <Camera size={16} />
+                  Upload Gallery Photos
+                </button>
               </div>
             )}
           </div>
@@ -767,6 +791,18 @@ export const EventDetails = () => {
         onConfirm={handleConfirmRegistration}
         loading={registering}
       />
+
+      {/* Upload Event Photos to Gallery Modal */}
+      {galleryModalOpen && (
+        <UploadGalleryModal
+          isOpen={galleryModalOpen}
+          onClose={() => setGalleryModalOpen(false)}
+          initialEventId={event?.id}
+          onUploaded={() => {
+            toast.success('Photos published to event gallery!');
+          }}
+        />
+      )}
     </div>
   );
 };

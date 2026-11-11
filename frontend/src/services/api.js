@@ -158,6 +158,11 @@ export const reportsAPI = {
 export const galleryAPI = {
   getAlbums: () => api.get('/albums/'),
   getImages: (params) => api.get('/images/', { params }),
+  getUploadableEvents: () => api.get('/albums/uploadable_events/'),
+  uploadImage: (formData) => api.post('/images/', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+  deleteImage: (id) => api.delete(`/images/${id}/`),
 };
 
 export default api;
