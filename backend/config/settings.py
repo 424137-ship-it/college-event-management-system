@@ -12,7 +12,9 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-campusx-super-secret-key-change-in-production-2026')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')]
+ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,*').split(',') if host.strip()]
+if '.onrender.com' not in ALLOWED_HOSTS and '*' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.extend(['.onrender.com', '.vercel.app'])
 if DEBUG and 'testserver' not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append('testserver')
 
@@ -114,26 +116,35 @@ if DATABASE_URL:
         
     DATABASES = {'default': db_config}
 else:
-    DB_NAME = os.getenv('DB_NAME', 'campusx_db')
-    DB_USER = os.getenv('DB_USER', 'root')
-    DB_PASSWORD = os.getenv('DB_PASSWORD', 'harsha@123')
-    DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
-    DB_PORT = os.getenv('DB_PORT', '3306')
-
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': DB_NAME,
-            'USER': DB_USER,
-            'PASSWORD': DB_PASSWORD,
-            'HOST': DB_HOST,
-            'PORT': DB_PORT,
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
+    db_engine = os.getenv('DB_ENGINE', '').lower()
+    if db_engine in ['sqlite', 'sqlite3'] or os.getenv('USE_SQLITE', 'False').lower() == 'true':
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': BASE_DIR / 'db.sqlite3',
+            }
         }
-    }
+    else:
+        DB_NAME = os.getenv('DB_NAME', 'campusx_db')
+        DB_USER = os.getenv('DB_USER', 'root')
+        DB_PASSWORD = os.getenv('DB_PASSWORD', 'harsha@123')
+        DB_HOST = os.getenv('DB_HOST', '127.0.0.1')
+        DB_PORT = os.getenv('DB_PORT', '3306')
+
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.mysql',
+                'NAME': DB_NAME,
+                'USER': DB_USER,
+                'PASSWORD': DB_PASSWORD,
+                'HOST': DB_HOST,
+                'PORT': DB_PORT,
+                'OPTIONS': {
+                    'charset': 'utf8mb4',
+                    'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                },
+            }
+        }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
