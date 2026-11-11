@@ -124,7 +124,7 @@ export const Gallery = () => {
   };
 
   const canDeleteImage = (img) => {
-    if (!user || !img) return False;
+    if (!user || !img) return false;
     if (isAdmin) return true;
     if (img.can_delete) return true;
     return false;
