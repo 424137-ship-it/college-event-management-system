@@ -232,7 +232,7 @@ export const Login = () => {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. harsha or harshax00@gmail.com"
+                    placeholder="e.g. harsha or harshax000@gmail.com"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     style={{
