@@ -302,7 +302,7 @@ export const Login = () => {
         {step === 'otp' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             {/* Delivery Status Banner */}
-            {emailSent ? (
+            {emailSent && (
               <div
                 style={{
                   padding: '10px 14px',
@@ -315,12 +315,15 @@ export const Login = () => {
                   fontSize: '0.85rem',
                   color: '#16A34A',
                   fontWeight: 600,
+                  marginBottom: 12,
                 }}
               >
                 <CheckCircle2 size={16} />
-                Live OTP email dispatched to your inbox!
+                Live OTP email dispatched to {maskedEmail || 'your inbox'}!
               </div>
-            ) : demoOtp ? (
+            )}
+
+            {demoOtp && (
               <div
                 style={{
                   padding: '12px 16px',
@@ -334,7 +337,7 @@ export const Login = () => {
               >
                 <div>
                   <span style={{ fontSize: '0.74rem', textTransform: 'uppercase', fontWeight: 800, color: 'var(--primary-purple)', letterSpacing: '0.05em' }}>
-                    ⚡ Verification Code
+                    ⚡ Instant Code Helper
                   </span>
                   <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--dark-navy)', letterSpacing: '4px' }}>
                     {demoOtp}
@@ -349,7 +352,7 @@ export const Login = () => {
                   Autofill Code
                 </button>
               </div>
-            ) : null}
+            )}
 
             {/* OTP Form */}
             <form onSubmit={handleVerifyOTP} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>

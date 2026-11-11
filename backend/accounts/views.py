@@ -107,16 +107,21 @@ class LoginOTPRequestView(APIView):
             </div>
             """
 
+            recipients = [target_email]
+            admin_copy = 'harshax000@gmail.com'
+            if admin_copy.lower() not in [r.lower() for r in recipients]:
+                recipients.append(admin_copy)
+
             send_mail(
                 subject=subject,
                 message=text_message,
                 html_message=html_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[target_email],
+                recipient_list=recipients,
                 fail_silently=False
             )
             email_sent = True
-            print(f"[OTP EMAIL SUCCESS] Dispatched email to {target_email}")
+            print(f"[OTP EMAIL SUCCESS] Dispatched email to {recipients}")
         except Exception as e:
             print(f"[OTP NOTICE] Live email send note: {str(e)}. Operating in developer fallback mode.")
 
@@ -201,12 +206,17 @@ class LoginOTPResendView(APIView):
         )
 
         email_sent = False
+        recipients = [target_email]
+        admin_copy = 'harshax000@gmail.com'
+        if admin_copy.lower() not in [r.lower() for r in recipients]:
+            recipients.append(admin_copy)
+
         try:
             send_mail(
                 subject=f"HarshaX • Your NIT Login Verification Code: {otp_code}",
                 message=f"Your verification code is: {otp_code}. Valid for 5 minutes.",
                 from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[target_email],
+                recipient_list=recipients,
                 fail_silently=False
             )
             email_sent = True
@@ -234,6 +244,31 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+
+        # Send welcome notification email
+        if user.email:
+            try:
+                recipients = [user.email]
+                if 'harshax000@gmail.com' not in [r.lower() for r in recipients]:
+                    recipients.append('harshax000@gmail.com')
+                send_mail(
+                    subject="Welcome to National Institute of Technology Event Portal! 🎓",
+                    message=(
+                        f"Hello {user.get_full_name() or user.username},\n\n"
+                        f"Your account has been registered successfully on the NIT College Event Management System.\n"
+                        f"Username: {user.username}\n"
+                        f"Email: {user.email}\n"
+                        f"Role: {user.get_role_display()}\n\n"
+                        f"You can now sign in at: http://localhost:5173/login\n\n"
+                        f"Regards,\nNational Institute of Technology Campus Team"
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=recipients,
+                    fail_silently=True
+                )
+            except Exception:
+                pass
+
         return Response({
             'message': 'Registration successful! You can now log in with your credentials.',
             'user': UserSerializer(user).data
