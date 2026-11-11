@@ -55,7 +55,7 @@ class ExpenseViewSet(viewsets.ModelViewSet):
     def export_csv(self, request):
         expenses = self.get_queryset()
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename="campusx_expenses.csv"'
+        response['Content-Disposition'] = 'attachment; filename="harshax_expenses.csv"'
 
         writer = csv.writer(response)
         writer.writerow(['ID', 'Event', 'Expense Title', 'Category', 'Amount (INR)', 'Date', 'Recorded By', 'Notes'])

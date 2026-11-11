@@ -20,7 +20,7 @@ export const VerifyCertificate = () => {
     } catch (err) {
       setResult({
         valid: false,
-        error: err.response?.data?.error || `Certificate ID '${idToVerify}' could not be verified in the CampusX authentic registry.`,
+        error: err.response?.data?.error || `Certificate ID '${idToVerify}' could not be verified in the HarshaX authentic registry.`,
       });
     } finally {
       setLoading(false);
@@ -62,7 +62,7 @@ export const VerifyCertificate = () => {
           Official Certificate Registry
         </h1>
         <p style={{ color: 'var(--muted-text)', fontSize: '1rem', marginTop: 8, maxWidth: 520, margin: '8px auto 0 auto' }}>
-          Validate genuine student certificates issued by college organizers and faculty on CampusX.
+          Validate genuine student certificates issued by college organizers and faculty on HarshaX.
         </p>
       </div>
 
@@ -138,7 +138,7 @@ export const VerifyCertificate = () => {
                   AUTHENTIC & VERIFIED
                 </span>
                 <h3 style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--dark-navy)' }}>
-                  Valid CampusX Digital Certificate
+                  Valid HarshaX Digital Certificate
                 </h3>
               </div>
             </div>

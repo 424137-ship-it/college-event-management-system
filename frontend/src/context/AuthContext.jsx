@@ -6,20 +6,20 @@ const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
-    const saved = localStorage.getItem('campusx_user');
+    const saved = localStorage.getItem('harshax_user') || localStorage.getItem('campusx_user');
     return saved ? JSON.parse(saved) : null;
   });
-  const [token, setToken] = useState(() => localStorage.getItem('campusx_access_token'));
+  const [token, setToken] = useState(() => localStorage.getItem('harshax_access_token') || localStorage.getItem('campusx_access_token'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const accessToken = localStorage.getItem('campusx_access_token');
+      const accessToken = localStorage.getItem('harshax_access_token') || localStorage.getItem('campusx_access_token');
       if (accessToken) {
         try {
           const res = await authAPI.getProfile();
           setUser(res.data);
-          localStorage.setItem('campusx_user', JSON.stringify(res.data));
+          localStorage.setItem('harshax_user', JSON.stringify(res.data));
         } catch (err) {
           console.error('Session expired or profile fetch failed:', err);
         }
@@ -33,9 +33,9 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authAPI.login(credentials);
       const { access, refresh, user: userData } = res.data;
-      localStorage.setItem('campusx_access_token', access);
-      localStorage.setItem('campusx_refresh_token', refresh);
-      localStorage.setItem('campusx_user', JSON.stringify(userData));
+      localStorage.setItem('harshax_access_token', access);
+      localStorage.setItem('harshax_refresh_token', refresh);
+      localStorage.setItem('harshax_user', JSON.stringify(userData));
       setToken(access);
       setUser(userData);
       toast.success(`Welcome back, ${userData.first_name || userData.username}!`);
@@ -60,6 +60,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    localStorage.removeItem('harshax_access_token');
+    localStorage.removeItem('harshax_refresh_token');
+    localStorage.removeItem('harshax_user');
     localStorage.removeItem('campusx_access_token');
     localStorage.removeItem('campusx_refresh_token');
     localStorage.removeItem('campusx_user');
@@ -72,7 +75,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authAPI.updateProfile(data);
       setUser(res.data);
-      localStorage.setItem('campusx_user', JSON.stringify(res.data));
+      localStorage.setItem('harshax_user', JSON.stringify(res.data));
       toast.success('Profile updated successfully!');
       return res.data;
     } catch (err) {

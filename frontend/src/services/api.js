@@ -12,7 +12,7 @@ const api = axios.create({
 // Request interceptor: add access token if available
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('campusx_access_token');
+    const token = localStorage.getItem('harshax_access_token') || localStorage.getItem('campusx_access_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -28,17 +28,20 @@ api.interceptors.response.use(
     const originalRequest = error.config;
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
-      const refreshToken = localStorage.getItem('campusx_refresh_token');
+      const refreshToken = localStorage.getItem('harshax_refresh_token') || localStorage.getItem('campusx_refresh_token');
       if (refreshToken) {
         try {
           const res = await axios.post(`${API_BASE_URL}/auth/token/refresh/`, {
             refresh: refreshToken,
           });
           const newAccess = res.data.access;
-          localStorage.setItem('campusx_access_token', newAccess);
+          localStorage.setItem('harshax_access_token', newAccess);
           originalRequest.headers.Authorization = `Bearer ${newAccess}`;
           return api(originalRequest);
         } catch (refreshErr) {
+          localStorage.removeItem('harshax_access_token');
+          localStorage.removeItem('harshax_refresh_token');
+          localStorage.removeItem('harshax_user');
           localStorage.removeItem('campusx_access_token');
           localStorage.removeItem('campusx_refresh_token');
           localStorage.removeItem('campusx_user');

@@ -31,7 +31,7 @@ export const Footer = () => {
               <Sparkles size={20} />
             </div>
             <span style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--dark-navy)' }}>
-              Campus<span style={{ color: 'var(--primary-purple)' }}>X</span>
+              Harsha<span style={{ color: 'var(--primary-purple)' }}>X</span>
             </span>
           </div>
           <p style={{ fontSize: '0.9rem', color: 'var(--muted-text)', lineHeight: 1.6 }}>
@@ -109,7 +109,7 @@ export const Footer = () => {
           color: 'var(--muted-text)',
         }}
       >
-        <p>© 2026 CampusX. All rights reserved.</p>
+        <p>© 2026 HarshaX. All rights reserved.</p>
         <p style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           Designed & Built with <Heart size={14} color="#A855F7" fill="#A855F7" /> for College Event Management.
         </p>

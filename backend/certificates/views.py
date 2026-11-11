@@ -31,7 +31,7 @@ def generate_pdf_certificate(cert):
     # Top Brand Header
     p.setFont("Helvetica-Bold", 14)
     p.setFillColor(colors.HexColor('#A855F7'))
-    p.drawCentredString(width / 2.0, height - 70, "CAMPUSX • DIGITAL CAMPUS EXPERIENCE")
+    p.drawCentredString(width / 2.0, height - 70, "HARSHAX • DIGITAL CAMPUS EXPERIENCE")
 
     # Main Certificate Title
     p.setFont("Helvetica-Bold", 32)
@@ -65,7 +65,7 @@ def generate_pdf_certificate(cert):
     venue_name = cert.event.venue.name if cert.event.venue else 'Campus Auditorium'
     p.setFont("Helvetica", 11)
     p.setFillColor(colors.HexColor('#77738B'))
-    p.drawCentredString(width / 2.0, height - 265, f"Organized by {cert.event.organizer.get_full_name() or 'CampusX'} on {cert.event.start_date.strftime('%B %d, %Y')} at {venue_name}")
+    p.drawCentredString(width / 2.0, height - 265, f"Organized by {cert.event.organizer.get_full_name() or 'HarshaX'} on {cert.event.start_date.strftime('%B %d, %Y')} at {venue_name}")
 
     # Signatures
     p.setFont("Helvetica-Bold", 12)
@@ -155,5 +155,5 @@ class PublicCertificateVerifyView(APIView):
         except Certificate.DoesNotExist:
             return Response({
                 'valid': False,
-                'error': f"Certificate with ID '{certificate_id}' was not found in the authentic CampusX registry."
+                'error': f"Certificate with ID '{certificate_id}' was not found in the authentic HarshaX registry."
             }, status=status.HTTP_404_NOT_FOUND)

@@ -39,7 +39,7 @@ class EventRegistrationSerializer(serializers.ModelSerializer):
     def get_qr_code_data_url(self, obj):
         try:
             qr = qrcode.QRCode(version=1, box_size=8, border=2)
-            ticket_data = f"CAMPUSX_TICKET:{obj.registration_id}"
+            ticket_data = f"HARSHAX_TICKET:{obj.registration_id}"
             qr.add_data(ticket_data)
             qr.make(fit=True)
             img = qr.make_image(fill_color="#17152B", back_color="#FFFFFF")

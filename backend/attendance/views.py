@@ -36,8 +36,8 @@ class VerifyAttendanceView(APIView):
         if not raw_code:
             return Response({'error': 'Ticket code or registration ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Parse QR code format if applicable: "CAMPUSX_TICKET:CX-1-XXXX"
-        reg_id = raw_code.replace('CAMPUSX_TICKET:', '').strip()
+        # Parse QR code format if applicable: "HARSHAX_TICKET:CX-1-XXXX" or "CAMPUSX_TICKET:CX-1-XXXX"
+        reg_id = raw_code.replace('HARSHAX_TICKET:', '').replace('CAMPUSX_TICKET:', '').strip()
 
         try:
             reg = EventRegistration.objects.select_related('user', 'event').get(registration_id=reg_id)

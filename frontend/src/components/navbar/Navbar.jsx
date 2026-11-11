@@ -104,7 +104,7 @@ export const Navbar = () => {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <span style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--dark-navy)' }}>
-              Campus<span style={{ color: 'var(--primary-purple)' }}>X</span>
+              Harsha<span style={{ color: 'var(--primary-purple)' }}>X</span>
             </span>
           </div>
         </Link>

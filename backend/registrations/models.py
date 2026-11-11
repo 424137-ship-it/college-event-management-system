@@ -39,7 +39,7 @@ class EventRegistration(models.Model):
                 border=2,
             )
             # Ticket verification payload
-            ticket_data = f"CAMPUSX_TICKET:{self.registration_id}"
+            ticket_data = f"HARSHAX_TICKET:{self.registration_id}"
             qr.add_data(ticket_data)
             qr.make(fit=True)
             img = qr.make_image(fill_color="#17152B", back_color="#FFFFFF")

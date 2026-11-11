@@ -1,4 +1,4 @@
-# CampusX: Futuristic College Event Management System
+# HarshaX: Futuristic College Event Management System
 
 [![Django](https://img.shields.io/badge/Django-5.2%2B-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![React](https://img.shields.io/badge/React-19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
@@ -10,9 +10,9 @@
 
 ## 1. Project Overview
 
-**CampusX** is a modern, enterprise-grade, centralized College Event and Community Management platform. Inspired by modern SaaS platforms, CampusX provides a single digital nexus where college students, club organizers, faculty mentors, and academic administrators collaborate seamlessly.
+**HarshaX** is a modern, enterprise-grade, centralized College Event and Community Management platform. Inspired by modern SaaS platforms, HarshaX provides a single digital nexus where college students, club organizers, faculty mentors, and academic administrators collaborate seamlessly.
 
-From participating in 36-hour hackathons and cultural pageants to instant QR ticket generation, live mobile attendance verification, financial budget tracking in INR (₹), and cryptographically verifiable PDF certificates, CampusX eliminates campus paperwork and empowers student innovation.
+From participating in 36-hour hackathons and cultural pageants to instant QR ticket generation, live mobile attendance verification, financial budget tracking in INR (₹), and cryptographically verifiable PDF certificates, HarshaX eliminates campus paperwork and empowers student innovation.
 
 ---
 
@@ -85,7 +85,7 @@ From participating in 36-hour hackathons and cultural pageants to instant QR tic
 
 ## 5. Prerequisites
 
-Before installing CampusX, ensure your machine has:
+Before installing HarshaX, ensure your machine has:
 1. **Node.js** (v18.x or v20.x+) and **npm** installed.
 2. **Python** (v3.10+ or v3.14+) with `pip`.
 3. **MySQL Server 8.0+** running locally on port `3306`.

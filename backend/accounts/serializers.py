@@ -83,7 +83,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         # Validate super admin signup
         if role == 'ADMIN':
-            allowed_keys = ['ADMIN2026', 'admin123', 'CAMPUSX_ADMIN', 'admin']
+            allowed_keys = ['ADMIN2026', 'admin123', 'HARSHAX_ADMIN', 'CAMPUSX_ADMIN', 'admin']
             if admin_secret_key not in allowed_keys:
                 raise serializers.ValidationError({'admin_secret_key': 'Invalid Admin Secret Key. Use ADMIN2026 for Super Admin signup.'})
 

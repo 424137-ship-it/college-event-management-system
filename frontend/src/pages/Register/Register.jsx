@@ -147,7 +147,7 @@ export const Register = () => {
             <Sparkles size={26} />
           </div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--dark-navy)' }}>
-            Join CampusX Platform
+            Join HarshaX Platform
           </h2>
           <p style={{ fontSize: '0.92rem', color: 'var(--muted-text)', marginTop: 4 }}>
             Choose your account role to access your dedicated dashboard & capabilities

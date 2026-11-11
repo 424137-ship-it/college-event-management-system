@@ -15,10 +15,10 @@ from notifications.models import Notification
 User = get_user_model()
 
 class Command(BaseCommand):
-    help = 'Seeds initial realistic data for CampusX College Event Management System'
+    help = 'Seeds initial realistic data for HarshaX College Event Management System'
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.NOTICE('Starting CampusX database seed...'))
+        self.stdout.write(self.style.NOTICE('Starting HarshaX database seed...'))
 
         # 1. Departments
         dept_data = [
@@ -56,7 +56,7 @@ class Command(BaseCommand):
         admin_user, created = User.objects.get_or_create(
             username='admin',
             defaults={
-                'email': 'admin@campusx.edu',
+                'email': 'admin@harshax.edu',
                 'first_name': 'Chief',
                 'last_name': 'Administrator',
                 'role': User.ADMIN,
@@ -74,7 +74,7 @@ class Command(BaseCommand):
         org_user, created = User.objects.get_or_create(
             username='organizer',
             defaults={
-                'email': 'organizer@campusx.edu',
+                'email': 'organizer@harshax.edu',
                 'first_name': 'Vikram',
                 'last_name': 'Aditya',
                 'role': User.ORGANIZER,
@@ -257,7 +257,7 @@ class Command(BaseCommand):
                 'rules': 'Teams must consist of 2 to 4 members. All code must be written during the hackathon. Plagiarism or pre-built prototypes will result in disqualification.',
                 'student_coordinator_name': 'Harsha Vardhan',
                 'student_coordinator_contact': '+91 9123456789',
-                'contact_email': 'hackathon@campusx.edu',
+                'contact_email': 'hackathon@harshax.edu',
                 'budget': 180000.00,
             },
             {
@@ -275,11 +275,11 @@ class Command(BaseCommand):
                 'registration_fee': 100.00,
                 'is_featured': True,
                 'status': 'PUBLISHED',
-                'description': 'Tarang is the mega annual cultural festival of CampusX! Three evenings of high-voltage musical performances, celebrity DJ nights, dramatic theatre showdowns, fashion pageants, and food stalls.',
+                'description': 'Tarang is the mega annual cultural festival of HarshaX! Three evenings of high-voltage musical performances, celebrity DJ nights, dramatic theatre showdowns, fashion pageants, and food stalls.',
                 'rules': 'College ID cards are strictly mandatory for entry. Outside food, beverages, and bags are subject to security screening.',
                 'student_coordinator_name': 'Rohan Sen',
                 'student_coordinator_contact': '+91 9876540011',
-                'contact_email': 'cultural@campusx.edu',
+                'contact_email': 'cultural@harshax.edu',
                 'budget': 350000.00,
             },
             {
@@ -301,7 +301,7 @@ class Command(BaseCommand):
                 'rules': 'Hardware kits are provided per team. Laptops with Ubuntu or WSL recommended for programming sessions.',
                 'student_coordinator_name': 'Ananya Roy',
                 'student_coordinator_contact': '+91 9887766554',
-                'contact_email': 'robotics@campusx.edu',
+                'contact_email': 'robotics@harshax.edu',
                 'budget': 85000.00,
             },
             {
@@ -323,7 +323,7 @@ class Command(BaseCommand):
                 'rules': 'Canvases and basic easels are provided. Artists may bring their own specialty brushes and paints.',
                 'student_coordinator_name': 'Divya Krishnan',
                 'student_coordinator_contact': '+91 9776655443',
-                'contact_email': 'artclub@campusx.edu',
+                'contact_email': 'artclub@harshax.edu',
                 'budget': 40000.00,
             },
             {
@@ -345,7 +345,7 @@ class Command(BaseCommand):
                 'rules': 'Photos must be submitted in RAW + JPEG. Minimal color correction allowed; generative manipulation strictly banned.',
                 'student_coordinator_name': 'Aarav Patel',
                 'student_coordinator_contact': '+91 9234567890',
-                'contact_email': 'photo@campusx.edu',
+                'contact_email': 'photo@harshax.edu',
                 'budget': 30000.00,
             },
             {
@@ -367,7 +367,7 @@ class Command(BaseCommand):
                 'rules': 'Each band is allotted 20 minutes on stage including sound check. Drum kit and PA provided; guitarists bring their pedals.',
                 'student_coordinator_name': 'Kabir Mehra',
                 'student_coordinator_contact': '+91 9665544332',
-                'contact_email': 'music@campusx.edu',
+                'contact_email': 'music@harshax.edu',
                 'budget': 120000.00,
             },
             {
@@ -389,7 +389,7 @@ class Command(BaseCommand):
                 'rules': 'Open to undergraduate and graduate scholars. Certificate of attendance provided.',
                 'student_coordinator_name': 'Harsha Vardhan',
                 'student_coordinator_contact': '+91 9123456789',
-                'contact_email': 'summit@campusx.edu',
+                'contact_email': 'summit@harshax.edu',
                 'budget': 95000.00,
             },
             {
@@ -411,7 +411,7 @@ class Command(BaseCommand):
                 'rules': 'Non-marking court shoes compulsory. BWF standard tournament rules apply.',
                 'student_coordinator_name': 'Siddharth Nair',
                 'student_coordinator_contact': '+91 9554433221',
-                'contact_email': 'sports@campusx.edu',
+                'contact_email': 'sports@harshax.edu',
                 'budget': 50000.00,
             },
             {
@@ -433,7 +433,7 @@ class Command(BaseCommand):
                 'rules': '5-minute pitch deck followed by 3-minute jury Q&A. Functional prototype or MVP required.',
                 'student_coordinator_name': 'Harsha Vardhan',
                 'student_coordinator_contact': '+91 9123456789',
-                'contact_email': 'e-cell@campusx.edu',
+                'contact_email': 'e-cell@harshax.edu',
                 'budget': 150000.00,
             },
             {
@@ -455,7 +455,7 @@ class Command(BaseCommand):
                 'rules': 'Participants completed a functional 3D demo.',
                 'student_coordinator_name': 'Harsha Vardhan',
                 'student_coordinator_contact': '+91 9123456789',
-                'contact_email': 'gamedev@campusx.edu',
+                'contact_email': 'gamedev@harshax.edu',
                 'budget': 60000.00,
             }
         ]
@@ -648,11 +648,11 @@ class Command(BaseCommand):
         ActivityLog.objects.get_or_create(
             user=admin_user,
             action="System Initialization",
-            defaults={'details': 'CampusX database initialized with master production seed.'}
+            defaults={'details': 'HarshaX database initialized with master production seed.'}
         )
 
         self.stdout.write(self.style.SUCCESS('\n========================================='))
-        self.stdout.write(self.style.SUCCESS('CAMPUSX DATABASE SEED COMPLETED SUCCESSFULLY!'))
+        self.stdout.write(self.style.SUCCESS('HARSHAX DATABASE SEED COMPLETED SUCCESSFULLY!'))
         self.stdout.write(self.style.SUCCESS('========================================='))
         self.stdout.write('Default login credentials:')
         self.stdout.write('  ADMIN:     admin     / admin123')

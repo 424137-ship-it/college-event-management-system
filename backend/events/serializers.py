@@ -115,7 +115,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
                     import qrcode, base64
                     from io import BytesIO
                     qr = qrcode.QRCode(version=1, box_size=8, border=2)
-                    qr.add_data(f"CAMPUSX_TICKET:{reg.registration_id}")
+                    qr.add_data(f"HARSHAX_TICKET:{reg.registration_id}")
                     qr.make(fit=True)
                     img = qr.make_image(fill_color="#17152B", back_color="#FFFFFF")
                     buf = BytesIO()

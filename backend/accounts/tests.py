@@ -13,7 +13,7 @@ from budgets.models import Budget, Expense
 
 User = get_user_model()
 
-class CampusXComprehensiveIntegrationTests(TestCase):
+class HarshaXComprehensiveIntegrationTests(TestCase):
     def setUp(self):
         self.client = APIClient()
         self.now = timezone.now()

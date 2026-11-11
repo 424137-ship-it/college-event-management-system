@@ -63,7 +63,7 @@ export const Home = () => {
               className="badge badge-purple"
               style={{ marginBottom: 20, padding: '6px 16px', fontSize: '0.85rem' }}
             >
-              <Sparkles size={16} /> CampusX 2.0 • Digital Event Management
+              <Sparkles size={16} /> HarshaX 2.0 • Digital Event Management
             </div>
 
             <h1
@@ -302,12 +302,12 @@ export const Home = () => {
         )}
       </section>
 
-      {/* How CampusX Works */}
+      {/* How HarshaX Works */}
       <section style={{ maxWidth: 1280, margin: '60px auto 40px auto', padding: '40px 24px' }}>
         <div style={{ textAlign: 'center', maxWidth: 640, margin: '0 auto 48px auto' }}>
           <span className="badge badge-blue" style={{ marginBottom: 10 }}>SEAMLESS WORKFLOW</span>
           <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--dark-navy)' }}>
-            How CampusX Works
+            How HarshaX Works
           </h2>
           <p style={{ color: 'var(--muted-text)', fontSize: '1rem', marginTop: 8 }}>
             From discovery to digital certification, everything is unified on one platform.
@@ -413,7 +413,7 @@ export const Home = () => {
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
               <Link to="/register" className="btn-primary" style={{ padding: '14px 32px', fontSize: '1rem' }}>
-                Join CampusX Now
+                Join HarshaX Now
               </Link>
               <Link to="/events" className="btn-secondary" style={{ padding: '14px 32px', fontSize: '1rem', background: 'transparent', color: '#FFFFFF', borderColor: 'rgba(216,180,254,0.4)' }}>
                 Browse Events

@@ -186,7 +186,7 @@ class EventViewSet(viewsets.ModelViewSet):
         Notification.objects.create(
             user=event.organizer,
             title="Event Approved! 🎉",
-            message=f"Your event '{event.title}' has been approved and published to CampusX.",
+            message=f"Your event '{event.title}' has been approved and published to HarshaX.",
             category='EVENT',
             link=f"/events/{event.id}"
         )

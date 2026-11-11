@@ -14,7 +14,7 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
       ? registration.qr_code.startsWith('http')
         ? registration.qr_code
         : `http://127.0.0.1:8000${registration.qr_code}`
-      : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=CAMPUSX_TICKET:${registration.registration_id}`);
+      : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=HARSHAX_TICKET:${registration.registration_id}`);
 
   return (
     <div
@@ -72,7 +72,7 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
             <X size={18} />
           </button>
           <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, opacity: 0.9 }}>
-            CampusX Official Pass
+            HarshaX Official Pass
           </span>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: 4 }}>
             {registration.event_title}
@@ -99,7 +99,7 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
               style={{ width: 180, height: 180, objectFit: 'contain', borderRadius: 8, display: 'block', margin: '0 auto' }}
               onError={(e) => {
                 // Secondary fallback if browser blocks external or local media
-                e.target.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=CAMPUSX_TICKET:${registration.registration_id}`;
+                e.target.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=HARSHAX_TICKET:${registration.registration_id}`;
               }}
             />
             <p style={{ marginTop: 8, fontSize: '0.88rem', fontWeight: 800, letterSpacing: '0.05em', color: 'var(--primary-purple)' }}>

@@ -95,7 +95,7 @@ export const Login = () => {
             <Sparkles size={24} />
           </div>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--dark-navy)' }}>
-            Welcome to CampusX
+            Welcome to HarshaX
           </h2>
           <p style={{ fontSize: '0.9rem', color: 'var(--muted-text)', marginTop: 4 }}>
             Enter your credentials to access your dashboard
