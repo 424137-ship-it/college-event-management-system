@@ -16,6 +16,7 @@ import { ClubDetails } from './pages/ClubDetails/ClubDetails';
 import { CalendarPage } from './pages/Calendar/Calendar';
 import { Gallery } from './pages/Gallery/Gallery';
 import { VerifyCertificate } from './pages/Certificates/VerifyCertificate';
+import { OrganizerProfile } from './pages/OrganizerProfile/OrganizerProfile';
 
 // Auth Pages
 import { Login } from './pages/Login/Login';
@@ -43,6 +44,9 @@ export function App() {
           <Route path="/clubs/:id" element={<ClubDetails />} />
           <Route path="/calendar" element={<CalendarPage />} />
           <Route path="/gallery" element={<Gallery />} />
+          <Route path="/organizers/:id" element={<OrganizerProfile />} />
+          <Route path="/presidents/:id" element={<OrganizerProfile />} />
+          <Route path="/users/:id" element={<OrganizerProfile />} />
           <Route path="/verify-certificate/:certificateId" element={<VerifyCertificate />} />
 
           {/* Auth Routes */}

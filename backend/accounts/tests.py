@@ -366,3 +366,14 @@ class HarshaXComprehensiveIntegrationTests(TestCase):
         self.assertIn('APPROVED_OD_ATTENDANCE', content)
         self.assertIn(self.student.username, content)
 
+    def test_public_user_profile_view(self):
+        """Students can view President/Organizer profile and their conducted events."""
+        self.client.force_authenticate(user=self.student)
+        res = self.client.get(f'/api/users/{self.organizer.id}/public_profile/')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data['id'], self.organizer.id)
+        self.assertIn('led_clubs', res.data)
+        self.assertIn('events', res.data)
+        self.assertIn('stats', res.data)
+        self.assertGreaterEqual(res.data['stats']['total_events'], 1)
+

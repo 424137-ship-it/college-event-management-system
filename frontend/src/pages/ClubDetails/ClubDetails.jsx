@@ -214,10 +214,28 @@ export const ClubDetails = () => {
               <span><strong>{club.members_count || 0}</strong> Active Members</span>
             </div>
             {club.president_name && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <ShieldCheck size={18} color="var(--accent-blue)" />
-                <span>President: <strong>{club.president_name}</strong></span>
-              </div>
+              <Link
+                to={`/organizers/${club.president || 1}`}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  textDecoration: 'none',
+                  color: 'inherit',
+                  padding: '4px 10px',
+                  borderRadius: 10,
+                  background: 'rgba(168, 85, 247, 0.08)',
+                  border: '1px solid rgba(168, 85, 247, 0.2)',
+                  transition: 'all 0.2s',
+                }}
+                title="View President Profile & Past Events"
+              >
+                <ShieldCheck size={18} color="var(--primary-purple)" />
+                <span>
+                  President: <strong style={{ color: 'var(--primary-purple)', textDecoration: 'underline' }}>{club.president_name}</strong>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--muted-text)', marginLeft: 6 }}>• View Events →</span>
+                </span>
+              </Link>
             )}
             {club.faculty_coordinator_name && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

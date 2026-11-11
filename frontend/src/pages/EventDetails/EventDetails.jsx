@@ -565,6 +565,77 @@ export const EventDetails = () => {
               </div>
             )}
           </div>
+
+          {/* Organized By / President Profile Card */}
+          <div
+            className="glass-panel"
+            style={{
+              padding: 24,
+              background: '#FFFFFF',
+              borderRadius: 24,
+              border: '1.5px solid var(--soft-border)',
+              boxShadow: '0 8px 24px rgba(23, 21, 43, 0.05)',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--muted-text)', letterSpacing: '0.05em' }}>
+                Event Leadership
+              </span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '0.74rem', color: '#10B981', fontWeight: 700 }}>
+                <ShieldCheck size={14} /> Verified Leader
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              <div
+                style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #A855F7 0%, #8B9DFF 100%)',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 800,
+                  fontSize: '1.2rem',
+                  flexShrink: 0,
+                }}
+              >
+                {event.organizer_name ? event.organizer_name.charAt(0).toUpperCase() : 'P'}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: 'var(--dark-navy)' }}>
+                  {event.organizer_name || 'Campus Event President'}
+                </h4>
+                <p style={{ margin: '2px 0 0 0', fontSize: '0.8rem', color: 'var(--muted-text)' }}>
+                  {event.club_name ? `${event.club_name} • President` : 'National Institute of Technology'}
+                </p>
+              </div>
+            </div>
+
+            <Link
+              to={`/organizers/${event.organizer || 1}`}
+              className="btn-secondary"
+              style={{
+                width: '100%',
+                marginTop: 16,
+                padding: '10px 14px',
+                fontSize: '0.84rem',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                borderColor: 'var(--primary-purple)',
+                color: 'var(--primary-purple)',
+                textDecoration: 'none',
+              }}
+            >
+              <span>View President Account & Events</span>
+              <ArrowRight size={14} />
+            </Link>
+          </div>
         </div>
       </div>
 

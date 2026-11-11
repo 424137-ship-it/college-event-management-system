@@ -61,6 +61,11 @@ export const authAPI = {
   updateProfile: (data) => api.put('/auth/profile/', data),
   getDepartments: () => api.get('/departments/'),
   getFaculty: () => api.get('/faculty/'),
+  getPublicProfile: (userId) => api.get(`/users/${userId}/public_profile/`),
+};
+
+export const usersAPI = {
+  getPublicProfile: (userId) => api.get(`/users/${userId}/public_profile/`),
 };
 
 export const eventsAPI = {
