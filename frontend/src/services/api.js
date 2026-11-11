@@ -100,6 +100,8 @@ export const registrationsAPI = {
     return api.post('/registrations/', payload);
   },
   getMyRegistrations: (params) => api.get('/registrations/', { params }),
+  approve: (id) => api.post(`/registrations/${id}/approve/`),
+  reject: (id, data) => api.post(`/registrations/${id}/reject/`, data),
   cancel: (id) => api.post(`/registrations/${id}/cancel/`),
   getSavedEvents: () => api.get('/saved-events/'),
 };

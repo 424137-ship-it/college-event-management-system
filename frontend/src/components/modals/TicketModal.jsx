@@ -1,9 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, Calendar, MapPin, CheckCircle2, Download, Printer } from 'lucide-react';
 import { Logo } from '../common/Logo';
 import { BACKEND_URL } from '../../services/api';
 
 export const TicketModal = ({ registration, isOpen, onClose }) => {
+  useEffect(() => {
+    if (isOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen || !registration) return null;
 
   const handlePrint = () => {
@@ -30,6 +40,7 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
         alignItems: 'center',
         justifyContent: 'center',
         padding: 20,
+        overflowY: 'auto',
       }}
       onClick={onClose}
     >
@@ -38,6 +49,9 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
         style={{
           width: '100%',
           maxWidth: 480,
+          maxHeight: 'min(92vh, 750px)',
+          display: 'flex',
+          flexDirection: 'column',
           background: '#FFFFFF',
           overflow: 'hidden',
           borderRadius: 24,
@@ -90,7 +104,7 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
         </div>
 
         {/* Ticket Body */}
-        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', overflowY: 'auto', flex: 1 }}>
           {/* QR Code */}
           <div
             style={{

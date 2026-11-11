@@ -4,7 +4,7 @@ import {
   LayoutDashboard, PlusCircle, Calendar, Users, QrCode, DollarSign,
   Briefcase, BarChart3, Settings, ArrowRight, CheckCircle2, XCircle,
   Clock, Download, FileSpreadsheet, ShieldAlert, Sparkles, AlertCircle,
-  Edit3, Building2
+  Edit3, Building2, UserCheck, RefreshCw, Filter
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { useAuth } from '../../context/AuthContext';
 import {
-  reportsAPI, eventsAPI, attendanceAPI, budgetsAPI, clubsAPI
+  reportsAPI, eventsAPI, attendanceAPI, budgetsAPI, clubsAPI, registrationsAPI
 } from '../../services/api';
 import { EditEventModal } from '../../components/modals/EditEventModal';
 import { CreateClubModal } from '../../components/modals/CreateClubModal';
@@ -29,6 +29,13 @@ export const OrganizerDashboard = () => {
   const [categories, setCategories] = useState([]);
   const [clubs, setClubs] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Registrations & Attendee Approvals State
+  const [registrations, setRegistrations] = useState([]);
+  const [regLoading, setRegLoading] = useState(false);
+  const [selectedRegEvent, setSelectedRegEvent] = useState('ALL');
+  const [regStatusFilter, setRegStatusFilter] = useState('ALL');
+  const [approvalProcessingId, setApprovalProcessingId] = useState(null);
 
   // Attendance scanner state
   const [ticketInput, setTicketInput] = useState('');
@@ -68,6 +75,7 @@ export const OrganizerDashboard = () => {
     venue: '',
     max_participants: 150,
     registration_fee: '0.00',
+    requires_approval: false,
     eligibility: 'Open to all college students',
     rules: '',
     student_coordinator_name: '',
@@ -124,6 +132,58 @@ export const OrganizerDashboard = () => {
     };
     loadDashboard();
   }, []);
+
+  const loadRegistrations = async () => {
+    setRegLoading(true);
+    try {
+      const params = { scope: 'organizer' };
+      if (selectedRegEvent !== 'ALL') params.event_id = selectedRegEvent;
+      if (regStatusFilter !== 'ALL') params.status = regStatusFilter;
+      const res = await registrationsAPI.getMyRegistrations(params);
+      setRegistrations(res.data.results || res.data || []);
+    } catch (err) {
+      console.error('Failed to load registrations:', err);
+    } finally {
+      setRegLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'registrations') {
+      loadRegistrations();
+    }
+  }, [activeTab, selectedRegEvent, regStatusFilter]);
+
+  const handleApproveRegistration = async (regId) => {
+    setApprovalProcessingId(regId);
+    try {
+      const res = await registrationsAPI.approve(regId);
+      toast.success(res.data.message || 'Attendee registration approved! Official pass issued.');
+      setRegistrations((prev) =>
+        prev.map((r) => (r.id === regId ? { ...r, status: 'CONFIRMED' } : r))
+      );
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to approve registration.');
+    } finally {
+      setApprovalProcessingId(null);
+    }
+  };
+
+  const handleRejectRegistration = async (regId) => {
+    const reason = window.prompt('Please provide a reason for declining registration (optional):') || '';
+    setApprovalProcessingId(regId);
+    try {
+      const res = await registrationsAPI.reject(regId, { reason });
+      toast.info('Attendee registration declined.');
+      setRegistrations((prev) =>
+        prev.map((r) => (r.id === regId ? { ...r, status: 'REJECTED' } : r))
+      );
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to reject registration.');
+    } finally {
+      setApprovalProcessingId(null);
+    }
+  };
 
   const handleVerifyTicket = async (e) => {
     e.preventDefault();
@@ -251,6 +311,7 @@ export const OrganizerDashboard = () => {
         {[
           { id: 'overview', label: 'Overview Analytics', icon: <BarChart3 size={16} /> },
           { id: 'manage', label: 'Manage Events', icon: <Calendar size={16} /> },
+          { id: 'registrations', label: 'Attendee Approvals', icon: <UserCheck size={16} /> },
           { id: 'clubs', label: 'My Clubs & Associations', icon: <Building2 size={16} /> },
           { id: 'attendance', label: 'QR Attendance Scanner', icon: <QrCode size={16} /> },
           { id: 'budget', label: 'Budget & Expenses (₹)', icon: <DollarSign size={16} /> },
@@ -429,6 +490,208 @@ export const OrganizerDashboard = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Tab: Attendee Approvals & Registrations */}
+      {activeTab === 'registrations' && (
+        <div className="glass-panel" style={{ padding: 28, background: '#FFFFFF', borderRadius: 24 }}>
+          {/* Header & Controls */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
+            <div>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 800, margin: '0 0 4px 0', color: 'var(--dark-navy)' }}>
+                Attendee Registrations & Approvals
+              </h3>
+              <p style={{ color: 'var(--muted-text)', fontSize: '0.88rem', margin: 0 }}>
+                Review attendee applications for events requiring organizer clearance, check payment references, and approve digital QR tickets.
+              </p>
+            </div>
+
+            {/* Filter controls */}
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+              {/* Event filter */}
+              <select
+                value={selectedRegEvent}
+                onChange={(e) => setSelectedRegEvent(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--soft-border)', background: 'var(--bg-primary)', fontSize: '0.85rem' }}
+              >
+                <option value="ALL">All My Events</option>
+                {myEvents.map((ev) => (
+                  <option key={ev.id} value={ev.id}>{ev.title}</option>
+                ))}
+              </select>
+
+              {/* Status filter */}
+              <select
+                value={regStatusFilter}
+                onChange={(e) => setRegStatusFilter(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: 10, border: '1px solid var(--soft-border)', background: 'var(--bg-primary)', fontSize: '0.85rem' }}
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="PENDING">Pending Review (Action Required)</option>
+                <option value="CONFIRMED">Confirmed</option>
+                <option value="REJECTED">Declined</option>
+              </select>
+
+              <button
+                onClick={loadRegistrations}
+                disabled={regLoading}
+                className="btn-secondary"
+                style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 6 }}
+                title="Refresh registrations"
+              >
+                <RefreshCw size={14} className={regLoading ? 'animate-spin' : ''} />
+                Refresh
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Metrics */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 24 }}>
+            <div style={{ padding: '14px 18px', background: '#F8F9FD', borderRadius: 16, border: '1px solid var(--soft-border)' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--muted-text)', fontWeight: 600 }}>Total Applications</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--dark-navy)', marginTop: 4 }}>{registrations.length}</div>
+            </div>
+            <div style={{ padding: '14px 18px', background: 'rgba(245, 158, 11, 0.08)', borderRadius: 16, border: '1px solid rgba(245, 158, 11, 0.25)' }}>
+              <div style={{ fontSize: '0.8rem', color: '#D97706', fontWeight: 600 }}>Pending Approval</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#D97706', marginTop: 4 }}>
+                {registrations.filter((r) => r.status === 'PENDING').length}
+              </div>
+            </div>
+            <div style={{ padding: '14px 18px', background: 'rgba(16, 185, 129, 0.08)', borderRadius: 16, border: '1px solid rgba(16, 185, 129, 0.25)' }}>
+              <div style={{ fontSize: '0.8rem', color: '#059669', fontWeight: 600 }}>Confirmed Attendees</div>
+              <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#059669', marginTop: 4 }}>
+                {registrations.filter((r) => r.status === 'CONFIRMED').length}
+              </div>
+            </div>
+          </div>
+
+          {/* Registrations Table */}
+          {regLoading ? (
+            <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted-text)' }}>
+              <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px auto' }} />
+              Loading attendee records...
+            </div>
+          ) : registrations.length === 0 ? (
+            <div style={{ padding: 48, textAlign: 'center', color: 'var(--muted-text)', background: 'var(--bg-primary)', borderRadius: 16 }}>
+              <UserCheck size={36} style={{ color: 'var(--muted-text)', opacity: 0.5, marginBottom: 12 }} />
+              <p style={{ fontWeight: 600, fontSize: '1rem', margin: 0 }}>No attendee registration records found.</p>
+              <p style={{ fontSize: '0.82rem', marginTop: 4 }}>Registrations for your organized events will appear here.</p>
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--soft-border)', color: 'var(--muted-text)' }}>
+                    <th style={{ padding: '12px 14px' }}>Attendee</th>
+                    <th style={{ padding: '12px 14px' }}>Event</th>
+                    <th style={{ padding: '12px 14px' }}>Payment / Fee</th>
+                    <th style={{ padding: '12px 14px' }}>Registered At</th>
+                    <th style={{ padding: '12px 14px' }}>Status</th>
+                    <th style={{ padding: '12px 14px', textAlign: 'right' }}>Review Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {registrations.map((reg) => (
+                    <tr key={reg.id} style={{ borderBottom: '1px solid var(--soft-border)' }}>
+                      <td style={{ padding: '14px' }}>
+                        <div style={{ fontWeight: 700, color: 'var(--dark-navy)' }}>
+                          {reg.user_full_name || 'NIT Student'}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--muted-text)' }}>
+                          {reg.user_roll_number ? `Roll: ${reg.user_roll_number} • ` : ''}{reg.user_email}
+                        </div>
+                      </td>
+                      <td style={{ padding: '14px' }}>
+                        <div style={{ fontWeight: 600, color: 'var(--dark-navy)' }}>{reg.event_title}</div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--muted-text)' }}>{reg.event_start_date}</div>
+                      </td>
+                      <td style={{ padding: '14px' }}>
+                        <span
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: 6,
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            background: reg.payment_status === 'PAID' ? 'rgba(168, 85, 247, 0.12)' : 'rgba(16, 185, 129, 0.12)',
+                            color: reg.payment_status === 'PAID' ? '#A855F7' : '#059669',
+                          }}
+                        >
+                          {reg.payment_status === 'PAID' ? 'PAID' : 'FREE'}
+                        </span>
+                        {reg.payment_reference && reg.payment_reference !== 'FREE_REGISTRATION' && (
+                          <div style={{ fontSize: '0.74rem', color: 'var(--muted-text)', fontFamily: 'monospace', marginTop: 4 }}>
+                            {reg.payment_reference}
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ padding: '14px', fontSize: '0.82rem', color: 'var(--muted-text)' }}>
+                        {new Date(reg.registered_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </td>
+                      <td style={{ padding: '14px' }}>
+                        <span
+                          className={`badge ${
+                            reg.status === 'CONFIRMED' ? 'badge-green' :
+                            reg.status === 'PENDING' ? 'badge-amber' :
+                            reg.status === 'REJECTED' ? 'badge-red' : 'badge-purple'
+                          }`}
+                        >
+                          {reg.status === 'PENDING' ? 'Pending Approval' : reg.status}
+                        </span>
+                      </td>
+                      <td style={{ padding: '14px', textAlign: 'right' }}>
+                        {reg.status === 'PENDING' ? (
+                          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={() => handleApproveRegistration(reg.id)}
+                              disabled={approvalProcessingId === reg.id}
+                              className="btn-primary"
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: '0.78rem',
+                                background: 'linear-gradient(135deg, #10B981, #059669)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                              }}
+                            >
+                              <CheckCircle2 size={13} />
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleRejectRegistration(reg.id)}
+                              disabled={approvalProcessingId === reg.id}
+                              className="btn-secondary"
+                              style={{
+                                padding: '6px 12px',
+                                fontSize: '0.78rem',
+                                color: '#EF4444',
+                                borderColor: 'rgba(239, 68, 68, 0.4)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 4,
+                              }}
+                            >
+                              <XCircle size={13} />
+                              Decline
+                            </button>
+                          </div>
+                        ) : reg.status === 'CONFIRMED' ? (
+                          <span style={{ fontSize: '0.78rem', color: '#10B981', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <CheckCircle2 size={14} /> Approved & Active
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.78rem', color: '#EF4444', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <XCircle size={14} /> Declined
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -933,6 +1196,26 @@ export const OrganizerDashboard = () => {
                     />
                   </div>
                 </div>
+
+                {/* Require Organizer Approval Toggle */}
+                <div style={{ padding: '14px 16px', background: 'rgba(168, 85, 247, 0.06)', borderRadius: 14, border: '1px solid rgba(168, 85, 247, 0.18)' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer', margin: 0 }}>
+                    <input
+                      type="checkbox"
+                      checked={eventFormData.requires_approval}
+                      onChange={(e) => setEventFormData({ ...eventFormData, requires_approval: e.target.checked })}
+                      style={{ width: 18, height: 18, accentColor: 'var(--primary-purple)' }}
+                    />
+                    <div>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--dark-navy)' }}>
+                        Require Organizer Approval (Screen Attendees)
+                      </span>
+                      <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--muted-text)' }}>
+                        Optional: When checked, student registrations remain in 'Pending Approval' until you review and approve them.
+                      </p>
+                    </div>
+                  </label>
+                </div>
               </div>
             )}
 
@@ -947,6 +1230,7 @@ export const OrganizerDashboard = () => {
                     <span><strong>Dates:</strong> {eventFormData.start_date} to {eventFormData.end_date}</span>
                     <span><strong>Cap:</strong> {eventFormData.max_participants}</span>
                     <span><strong>Fee:</strong> ₹{eventFormData.registration_fee}</span>
+                    <span><strong>Approval:</strong> {eventFormData.requires_approval ? 'Required' : 'Direct (Automatic)'}</span>
                   </div>
                 </div>
               </div>

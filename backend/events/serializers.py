@@ -49,7 +49,7 @@ class EventListSerializer(serializers.ModelSerializer):
             'short_description', 'poster', 'poster_url',
             'start_date', 'end_date', 'start_time', 'end_time',
             'registration_deadline', 'max_participants', 'registration_fee',
-            'status', 'is_featured', 'registered_count', 'is_registration_open',
+            'requires_approval', 'status', 'is_featured', 'registered_count', 'is_registration_open',
             'is_saved', 'is_registered', 'created_at'
         ]
 
@@ -62,7 +62,7 @@ class EventListSerializer(serializers.ModelSerializer):
     def get_is_registered(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return obj.registrations.filter(user=request.user, status='CONFIRMED').exists()
+            return obj.registrations.filter(user=request.user, status__in=['CONFIRMED', 'PENDING']).exists()
         return False
 
 class EventDetailSerializer(serializers.ModelSerializer):
@@ -77,6 +77,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
     is_registration_open = serializers.BooleanField(read_only=True)
     is_saved = serializers.SerializerMethodField()
     is_registered = serializers.SerializerMethodField()
+    registration_status = serializers.SerializerMethodField()
     user_ticket = serializers.SerializerMethodField()
 
     class Meta:
@@ -87,10 +88,11 @@ class EventDetailSerializer(serializers.ModelSerializer):
             'description', 'short_description', 'poster', 'poster_url',
             'start_date', 'end_date', 'start_time', 'end_time',
             'registration_deadline', 'max_participants', 'registration_fee',
-            'eligibility', 'rules', 'faculty_coordinator', 'student_coordinator_name',
-            'student_coordinator_contact', 'contact_email', 'status', 'is_featured',
-            'schedules', 'approval', 'registered_count', 'is_registration_open',
-            'is_saved', 'is_registered', 'user_ticket', 'created_at', 'updated_at'
+            'requires_approval', 'eligibility', 'rules', 'faculty_coordinator',
+            'student_coordinator_name', 'student_coordinator_contact', 'contact_email',
+            'status', 'is_featured', 'schedules', 'approval', 'registered_count',
+            'is_registration_open', 'is_saved', 'is_registered', 'registration_status',
+            'user_ticket', 'created_at', 'updated_at'
         ]
 
     def get_is_saved(self, obj):
@@ -102,8 +104,16 @@ class EventDetailSerializer(serializers.ModelSerializer):
     def get_is_registered(self, obj):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
-            return obj.registrations.filter(user=request.user, status='CONFIRMED').exists()
+            return obj.registrations.filter(user=request.user, status__in=['CONFIRMED', 'PENDING']).exists()
         return False
+
+    def get_registration_status(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            reg = obj.registrations.filter(user=request.user).first()
+            if reg:
+                return reg.status
+        return None
 
     def get_user_ticket(self, obj):
         request = self.context.get('request')
@@ -115,7 +125,7 @@ class EventDetailSerializer(serializers.ModelSerializer):
                     import qrcode, base64
                     from io import BytesIO
                     qr = qrcode.QRCode(version=1, box_size=8, border=2)
-                    qr.add_data(f"HARSHAX_TICKET:{reg.registration_id}")
+                    qr.add_data(f"NIT_TICKET:{reg.registration_id}")
                     qr.make(fit=True)
                     img = qr.make_image(fill_color="#17152B", back_color="#FFFFFF")
                     buf = BytesIO()

@@ -62,8 +62,12 @@ export const EventDetails = () => {
       navigate('/login', { state: { from: { pathname: `/events/${id}` } } });
       return;
     }
-    if (event?.is_registered) {
+    if (event?.registration_status === 'CONFIRMED') {
       setTicketModalOpen(true);
+      return;
+    }
+    if (event?.registration_status === 'PENDING') {
+      toast.info('Your registration application is currently pending organizer approval.');
       return;
     }
     setConfirmModalOpen(true);
@@ -78,67 +82,80 @@ export const EventDetails = () => {
       };
       const res = await registrationsAPI.register(payload);
       const reg = res.data.registration;
-      toast.success(res.data.message || 'Registration confirmed!');
 
-      // Trigger Confetti Celebration
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#A855F7', '#8B9DFF', '#D8B4FE', '#10B981'],
-      });
-
-      // Update state
-      setEvent((prev) => ({
-        ...prev,
-        is_registered: true,
-        registered_count: (prev.registered_count || 0) + 1,
-      }));
-
-      setTicketData({
-        ...reg,
-        event_title: event.title,
-        event_start_date: event.start_date,
-        event_start_time: event.start_time,
-        venue_name: event.venue_name,
-        user_full_name: user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username,
-        user_roll_number: user?.student_profile?.roll_number,
-      });
-
-      setConfirmModalOpen(false);
-      setTicketModalOpen(true);
-    } catch (err) {
-      if (err.response?.data?.error || err.response?.data?.message) {
-        toast.error(err.response?.data?.error || err.response?.data?.message);
-      } else {
-        // Offline / preview fallback registration for NIT
+      if (reg.status === 'PENDING' || res.data.requires_approval) {
+        toast.info(res.data.message || 'Registration request submitted for review!');
         setEvent((prev) => ({
           ...prev,
           is_registered: true,
-          registered_count: (prev.registered_count || 0) + 1,
+          registration_status: 'PENDING',
         }));
-        setTicketData({
-          ticket_code: `NIT-${Math.floor(100000 + Math.random() * 900000)}`,
-          event_title: event?.title || 'Campus Event',
-          event_start_date: event?.start_date,
-          event_start_time: event?.start_time || '17:00:00',
-          venue_name: event?.venue_name || 'Dr. B.R. Ambedkar Auditorium, NIT',
-          user_full_name: user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username,
-          user_roll_number: user?.student_profile?.roll_number || '424137',
-          created_at: new Date().toISOString(),
-          status: 'CONFIRMED',
-          payment_status: paymentToken ? 'PAID' : 'FREE',
-          payment_reference: paymentToken || 'FREE_REGISTRATION',
-        });
         setConfirmModalOpen(false);
-        setTicketModalOpen(true);
+      } else {
+        toast.success(res.data.message || 'Registration confirmed!');
         confetti({
           particleCount: 80,
           spread: 70,
           origin: { y: 0.6 },
           colors: ['#A855F7', '#8B9DFF', '#D8B4FE', '#10B981'],
         });
-        toast.success('Registration Confirmed! Official NIT E-Ticket issued.');
+        setEvent((prev) => ({
+          ...prev,
+          is_registered: true,
+          registration_status: 'CONFIRMED',
+          registered_count: (prev.registered_count || 0) + 1,
+        }));
+        setTicketData({
+          ...reg,
+          event_title: event.title,
+          event_start_date: event.start_date,
+          event_start_time: event.start_time,
+          venue_name: event.venue_name,
+          user_full_name: user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username,
+          user_roll_number: user?.student_profile?.roll_number,
+        });
+        setConfirmModalOpen(false);
+        setTicketModalOpen(true);
+      }
+    } catch (err) {
+      if (err.response?.data?.error || err.response?.data?.message) {
+        toast.error(err.response?.data?.error || err.response?.data?.message);
+      } else {
+        // Offline / preview fallback registration for NIT
+        const fallbackStatus = event?.requires_approval ? 'PENDING' : 'CONFIRMED';
+        setEvent((prev) => ({
+          ...prev,
+          is_registered: true,
+          registration_status: fallbackStatus,
+          registered_count: fallbackStatus === 'CONFIRMED' ? (prev.registered_count || 0) + 1 : prev.registered_count,
+        }));
+        if (fallbackStatus === 'CONFIRMED') {
+          setTicketData({
+            ticket_code: `NIT-${Math.floor(100000 + Math.random() * 900000)}`,
+            event_title: event?.title || 'Campus Event',
+            event_start_date: event?.start_date,
+            event_start_time: event?.start_time || '17:00:00',
+            venue_name: event?.venue_name || 'Dr. B.R. Ambedkar Auditorium, NIT',
+            user_full_name: user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username,
+            user_roll_number: user?.student_profile?.roll_number || '424137',
+            created_at: new Date().toISOString(),
+            status: 'CONFIRMED',
+            payment_status: paymentToken ? 'PAID' : 'FREE',
+            payment_reference: paymentToken || 'FREE_REGISTRATION',
+          });
+          setConfirmModalOpen(false);
+          setTicketModalOpen(true);
+          confetti({
+            particleCount: 80,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#A855F7', '#8B9DFF', '#D8B4FE', '#10B981'],
+          });
+          toast.success('Registration Confirmed! Official NIT E-Ticket issued.');
+        } else {
+          setConfirmModalOpen(false);
+          toast.info('Registration request submitted! Awaiting organizer review.');
+        }
       }
     } finally {
       setRegistering(false);
@@ -395,7 +412,53 @@ export const EventDetails = () => {
             </div>
 
             {/* Registration status */}
-            {event.is_registered ? (
+            {event.registration_status === 'PENDING' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div
+                  style={{
+                    padding: 14,
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    borderRadius: 14,
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: 10,
+                    color: '#FBBF24',
+                    fontSize: '0.88rem',
+                  }}
+                >
+                  <Clock size={20} style={{ flexShrink: 0, marginTop: 2 }} />
+                  <div>
+                    <strong style={{ display: 'block', color: '#FCD34D', marginBottom: 2 }}>
+                      Registration Pending Approval
+                    </strong>
+                    <span style={{ fontSize: '0.8rem', color: '#D1D5DB', lineHeight: 1.4 }}>
+                      Your registration has been submitted and is currently being screened by the event coordinator. Your official QR ticket will activate upon approval.
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : event.registration_status === 'REJECTED' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div
+                  style={{
+                    padding: 14,
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    borderRadius: 14,
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 10,
+                    color: '#EF4444',
+                    fontWeight: 600,
+                    fontSize: '0.92rem',
+                  }}
+                >
+                  <AlertCircle size={20} />
+                  Registration Not Approved by Organizer
+                </div>
+              </div>
+            ) : (event.is_registered || event.registration_status === 'CONFIRMED') ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <div
                   style={{

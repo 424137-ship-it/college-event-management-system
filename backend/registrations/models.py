@@ -8,6 +8,8 @@ from django.core.files.base import ContentFile
 class EventRegistration(models.Model):
     STATUS_CHOICES = [
         ('CONFIRMED', 'Confirmed'),
+        ('PENDING', 'Pending Approval'),
+        ('REJECTED', 'Rejected'),
         ('CANCELLED', 'Cancelled'),
         ('WAITLISTED', 'Waitlisted'),
     ]

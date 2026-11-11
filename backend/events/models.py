@@ -64,6 +64,7 @@ class Event(models.Model):
 
     max_participants = models.PositiveIntegerField(default=100)
     registration_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    requires_approval = models.BooleanField(default=False, help_text="Require organizer approval before issuing confirmed ticket")
     eligibility = models.CharField(max_length=200, default='Open to all college students')
     rules = models.TextField(blank=True)
 

@@ -30,10 +30,21 @@ export const EditEventModal = ({ event, isOpen, onClose, onSaved }) => {
     rules: '',
     status: 'PUBLISHED',
     is_featured: false,
+    requires_approval: false,
     contact_email: '',
     student_coordinator_name: '',
     student_coordinator_contact: '',
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -73,6 +84,7 @@ export const EditEventModal = ({ event, isOpen, onClose, onSaved }) => {
           rules: event.rules || '',
           status: event.status || 'PUBLISHED',
           is_featured: !!event.is_featured,
+          requires_approval: !!event.requires_approval,
           contact_email: event.contact_email || '',
           student_coordinator_name: event.student_coordinator_name || '',
           student_coordinator_contact: event.student_coordinator_contact || '',
@@ -368,6 +380,27 @@ export const EditEventModal = ({ event, isOpen, onClose, onSaved }) => {
                 style={{ width: '100%', padding: '10px 14px', borderRadius: 12, border: '1px solid var(--soft-border)', background: 'var(--bg-primary)' }}
               />
             </div>
+          </div>
+
+          {/* Require Organizer Approval Toggle */}
+          <div style={{ padding: '12px 14px', background: 'rgba(168, 85, 247, 0.06)', borderRadius: 12, border: '1px solid rgba(168, 85, 247, 0.15)' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', margin: 0 }}>
+              <input
+                type="checkbox"
+                name="requires_approval"
+                checked={formData.requires_approval}
+                onChange={handleChange}
+                style={{ width: 18, height: 18, accentColor: 'var(--primary-purple)' }}
+              />
+              <div>
+                <span style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--dark-navy)' }}>
+                  Require Organizer Approval for Attendees
+                </span>
+                <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--muted-text)' }}>
+                  When enabled, student registrations are placed in 'Pending Approval' status until manually approved by the organizer.
+                </p>
+              </div>
+            </label>
           </div>
 
           {/* Admin Featured Toggle */}
