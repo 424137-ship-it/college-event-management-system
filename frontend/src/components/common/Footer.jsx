@@ -15,12 +15,18 @@ export const Footer = () => {
     >
       <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 40, marginBottom: 50 }}>
         {/* Brand column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <Link to="/" style={{ display: 'inline-block' }} title="HarshaX">
             <Logo variant="horizontal" height={38} />
           </Link>
-          <p style={{ fontSize: '0.9rem', color: 'var(--muted-text)', lineHeight: 1.6 }}>
-            The futuristic centralized college event and club management system. Empowering campus ideas, hackathons, and activities.
+          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary-purple)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            National Institute of Technology Andhra Pradesh
+          </div>
+          <p style={{ fontSize: '0.88rem', color: 'var(--muted-text)', lineHeight: 1.6 }}>
+            The centralized campus event, departmental associations (ASCII, ECEA, MESA) & clubs portal of NIT Andhra Pradesh. Empowering hackathons, Vulcanzy, and student initiatives.
+          </p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--muted-text)' }}>
+            📍 Tadepalligudem, West Godavari District, Andhra Pradesh - 534101
           </p>
           <div style={{ display: 'flex', gap: 12 }}>
             <a

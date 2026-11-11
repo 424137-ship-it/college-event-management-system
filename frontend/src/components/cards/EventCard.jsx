@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Clock, MapPin, Users, Bookmark, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Bookmark, ArrowRight, CheckCircle2, Share2 } from 'lucide-react';
 import { eventsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
@@ -126,6 +126,16 @@ export const EventCard = ({ event, onSaveToggle }) => {
 
       {/* Content */}
       <div style={{ padding: 20, display: 'flex', flexDirection: 'column', flex: 1 }}>
+        {/* Organizing Club & OD Badge */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--primary-purple)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            {event.club_name || 'NIT AP Campus'}
+          </span>
+          <span style={{ padding: '2px 8px', borderRadius: 6, background: '#ECFDF5', color: '#059669', fontSize: '0.7rem', fontWeight: 700 }}>
+            🎓 OD Provided
+          </span>
+        </div>
+
         <h3
           style={{
             fontSize: '1.15rem',
@@ -162,7 +172,7 @@ export const EventCard = ({ event, onSaveToggle }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <MapPin size={15} color="var(--accent-blue)" />
             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {event.venue_name || 'Auditorium'}
+              {event.venue_name || 'Auditorium, NIT AP'}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -173,23 +183,48 @@ export const EventCard = ({ event, onSaveToggle }) => {
           </div>
         </div>
 
-        {/* Action Button */}
-        <div style={{ marginTop: 'auto', display: 'flex', gap: 10 }}>
+        {/* Action Button & WhatsApp Share */}
+        <div style={{ marginTop: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
           <Link
             to={`/events/${event.id}`}
             className="btn-secondary"
-            style={{ flex: 1, padding: '10px 14px', fontSize: '0.85rem' }}
+            style={{ flex: 1, padding: '10px 12px', fontSize: '0.85rem', textAlign: 'center' }}
           >
             Details
           </Link>
           <Link
             to={`/events/${event.id}`}
             className="btn-primary"
-            style={{ flex: 1.2, padding: '10px 14px', fontSize: '0.85rem' }}
+            style={{ flex: 1.2, padding: '10px 12px', fontSize: '0.85rem', textAlign: 'center' }}
           >
             {event.is_registered ? 'View Ticket' : 'Register'}
             <ArrowRight size={14} />
           </Link>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const shareUrl = `${window.location.origin}/events/${event.id}`;
+              const msg = `Hey! Check out "${event.title}" happening at NIT Andhra Pradesh: ${shareUrl}`;
+              window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+            }}
+            title="Share on WhatsApp"
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              background: '#25D366',
+              color: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              boxShadow: '0 2px 8px rgba(37, 211, 102, 0.3)',
+            }}
+          >
+            <Share2 size={16} />
+          </button>
         </div>
       </div>
     </div>

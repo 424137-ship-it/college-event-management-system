@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   Sparkles, Calendar, Users, Trophy, Rocket, ArrowRight,
-  ShieldCheck, QrCode, Award, CheckCircle2, ChevronRight
+  ShieldCheck, QrCode, Award, CheckCircle2, ChevronRight, Search, Flame
 } from 'lucide-react';
 import { eventsAPI, clubsAPI, reportsAPI } from '../../services/api';
 import { EventCard } from '../../components/cards/EventCard';
 import { ClubCard } from '../../components/cards/ClubCard';
 
 export const Home = () => {
+  const navigate = useNavigate();
   const [featuredEvents, setFeaturedEvents] = useState([]);
   const [popularClubs, setPopularClubs] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [stats, setStats] = useState({
     total_events: 0,
     total_clubs: 0,
@@ -19,6 +21,29 @@ export const Home = () => {
     total_competitions: 0,
   });
   const [loading, setLoading] = useState(true);
+
+  // Live Countdown to Vulcanzy 2026 at NIT AP
+  const [timeLeft, setTimeLeft] = useState({ days: 12, hours: 8, minutes: 24, seconds: 40 });
+
+  useEffect(() => {
+    const targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() + 12);
+    targetDate.setHours(16, 0, 0, 0);
+
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = targetDate.getTime() - now;
+      if (distance > 0) {
+        setTimeLeft({
+          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((distance % (1000 * 60)) / 1000),
+        });
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const loadHomeData = async () => {
@@ -61,43 +86,86 @@ export const Home = () => {
           >
             <div
               className="badge badge-purple"
-              style={{ marginBottom: 20, padding: '6px 16px', fontSize: '0.85rem' }}
+              style={{ marginBottom: 18, padding: '7px 18px', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
-              <Sparkles size={16} /> HarshaX 2.0 • Digital Event Management
+              <Sparkles size={15} /> National Institute of Technology Andhra Pradesh • HarshaX 2.0
             </div>
 
             <h1
               style={{
-                fontSize: 'clamp(2.5rem, 5vw, 3.8rem)',
+                fontSize: 'clamp(2.4rem, 4.8vw, 3.8rem)',
                 fontWeight: 800,
                 lineHeight: 1.15,
                 color: 'var(--dark-navy)',
-                marginBottom: 20,
+                marginBottom: 18,
               }}
             >
-              Where Campus Ideas Become{' '}
+              Where NITian Ideas Become{' '}
               <span className="gradient-text">Unforgettable Events</span>
             </h1>
 
             <p
               style={{
-                fontSize: '1.15rem',
+                fontSize: '1.1rem',
                 color: 'var(--muted-text)',
-                lineHeight: 1.7,
-                marginBottom: 36,
-                maxWidth: 540,
+                lineHeight: 1.65,
+                marginBottom: 24,
+                maxWidth: 550,
               }}
             >
-              Discover, organize, and experience every campus event in one place. Connect with clubs, explore opportunities, and make your college life memorable.
+              The official centralized campus event and club engagement portal of NIT Andhra Pradesh. Discover technical symposiums, Vulcanzy socio-cultural fest, and connect with departmental associations (ASCII, ECEA, MESA) and student clubs.
             </p>
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-              <Link to="/events" className="btn-primary" style={{ padding: '14px 28px', fontSize: '1rem' }}>
+            {/* Hero Quick Search Bar */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                navigate(`/events?search=${encodeURIComponent(searchQuery)}`);
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: '#FFFFFF',
+                borderRadius: 16,
+                padding: '6px 8px 6px 16px',
+                border: '1.5px solid var(--soft-border)',
+                boxShadow: '0 8px 24px rgba(168, 85, 247, 0.08)',
+                marginBottom: 24,
+                maxWidth: 530,
+                gap: 10,
+              }}
+            >
+              <Search size={18} color="var(--primary-purple)" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search Vulcanzy, ASCII hackathons, workshops..."
+                style={{
+                  border: 'none',
+                  outline: 'none',
+                  width: '100%',
+                  fontSize: '0.92rem',
+                  color: 'var(--dark-navy)',
+                  background: 'transparent',
+                }}
+              />
+              <button
+                type="submit"
+                className="btn-primary"
+                style={{ padding: '10px 18px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+              >
+                Find Events
+              </button>
+            </form>
+
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+              <Link to="/events" className="btn-primary" style={{ padding: '12px 24px', fontSize: '0.95rem' }}>
                 <Rocket size={18} />
                 Explore Events
               </Link>
-              <Link to="/organizer" className="btn-secondary" style={{ padding: '14px 28px', fontSize: '1rem' }}>
-                Organize an Event
+              <Link to="/clubs" className="btn-secondary" style={{ padding: '12px 24px', fontSize: '0.95rem' }}>
+                Clubs & Associations
                 <ArrowRight size={18} />
               </Link>
             </div>
@@ -267,6 +335,89 @@ export const Home = () => {
             <div style={{ fontSize: '0.9rem', color: 'var(--muted-text)', fontWeight: 600, marginTop: 4 }}>
               Competitions & Contests
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Live Vulcanzy '26 Countdown Banner */}
+      <section style={{ maxWidth: 1280, margin: '-20px auto 40px auto', padding: '0 24px' }}>
+        <div
+          className="glass-panel"
+          style={{
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(243, 238, 255, 0.95) 100%)',
+            border: '1.5px solid var(--light-violet)',
+            padding: '24px 32px',
+            borderRadius: 24,
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 24,
+            boxShadow: '0 12px 32px -4px rgba(168, 85, 247, 0.12)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div
+              style={{
+                width: 52,
+                height: 52,
+                borderRadius: 16,
+                background: 'linear-gradient(135deg, #A855F7 0%, #8B9DFF 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#FFFFFF',
+                boxShadow: '0 4px 14px rgba(168, 85, 247, 0.35)',
+              }}
+            >
+              <Flame size={28} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>MARQUEE FESTIVAL</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--muted-text)', fontWeight: 600 }}>NIT Andhra Pradesh</span>
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--dark-navy)', marginTop: 2 }}>
+                Vulcanzy 2026 • Annual Socio-Cultural Festival
+              </h3>
+            </div>
+          </div>
+
+          {/* Countdown Clock */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            {[
+              { val: timeLeft.days, label: 'DAYS' },
+              { val: timeLeft.hours, label: 'HOURS' },
+              { val: timeLeft.minutes, label: 'MINS' },
+              { val: timeLeft.seconds, label: 'SECS' },
+            ].map((unit, idx) => (
+              <div
+                key={idx}
+                style={{
+                  minWidth: 62,
+                  padding: '10px 8px',
+                  background: '#FFFFFF',
+                  borderRadius: 14,
+                  border: '1px solid var(--soft-border)',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 8px rgba(23, 21, 43, 0.04)',
+                }}
+              >
+                <div style={{ fontSize: '1.35rem', fontWeight: 900, color: 'var(--primary-purple)', lineHeight: 1 }}>
+                  {String(unit.val).padStart(2, '0')}
+                </div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--muted-text)', marginTop: 4, letterSpacing: '0.05em' }}>
+                  {unit.label}
+                </div>
+              </div>
+            ))}
+            <Link
+              to="/events"
+              className="btn-primary"
+              style={{ padding: '12px 20px', fontSize: '0.88rem', marginLeft: 6 }}
+            >
+              Explore Passes
+            </Link>
           </div>
         </div>
       </section>

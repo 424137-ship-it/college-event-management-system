@@ -18,51 +18,59 @@ class Command(BaseCommand):
     help = 'Seeds initial realistic data for HarshaX College Event Management System'
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.NOTICE('Starting HarshaX database seed...'))
+        self.stdout.write(self.style.NOTICE('Starting HarshaX database seed for NIT Andhra Pradesh...'))
 
-        # 1. Departments
+        # 1. Departments at NIT Andhra Pradesh
         dept_data = [
             ('Computer Science & Engineering', 'CSE'),
             ('Electronics & Communication Engineering', 'ECE'),
+            ('Electrical Engineering', 'EEE'),
             ('Mechanical Engineering', 'MECH'),
-            ('Information Technology', 'IT'),
-            ('Biotechnology', 'BT'),
-            ('Management Studies', 'MBA'),
+            ('Civil Engineering', 'CIVIL'),
+            ('Chemical Engineering', 'CHEM'),
+            ('Biotechnology', 'BIOTECH'),
+            ('Metallurgical & Materials Engineering', 'MME'),
         ]
         departments = {}
         for name, code in dept_data:
-            dept, _ = Department.objects.get_or_create(code=code, defaults={'name': name})
+            dept = Department.objects.filter(name=name).first() or Department.objects.filter(code=code).first()
+            if not dept:
+                dept = Department.objects.create(name=name, code=code)
+            else:
+                dept.name = name
+                dept.code = code
+                dept.save()
             departments[code] = dept
-        self.stdout.write(self.style.SUCCESS(f'Created {len(departments)} departments.'))
+        self.stdout.write(self.style.SUCCESS(f'Created {len(departments)} NIT AP departments.'))
 
-        # 2. Faculty
+        # 2. Faculty & Administration
         faculty_data = [
-            ('Dr. Arvind Raman', 'arvind.raman@campus.edu', 'CSE', 'Professor & HOD'),
-            ('Dr. Meenakshi Sundaram', 'meenakshi.s@campus.edu', 'ECE', 'Associate Professor'),
-            ('Dr. Rajesh Verma', 'rajesh.verma@campus.edu', 'MECH', 'Dean of Student Affairs'),
-            ('Prof. Sneha Kulkarni', 'sneha.k@campus.edu', 'IT', 'Assistant Professor'),
+            ('Dr. P. Dinesh Sankar Reddy', 'dean_sa@nitandhra.ac.in', 'CHEM', 'Dean of Student Affairs'),
+            ('Dr. Karthick Seshadri', 'hod_cse@nitandhra.ac.in', 'CSE', 'Associate Professor & HOD'),
+            ('Dr. P. S. V. Shanmukhi', 'shanmukhi@nitandhra.ac.in', 'ECE', 'Assistant Professor & Faculty Advisor'),
+            ('Dr. V. Sandeep', 'sandeep@nitandhra.ac.in', 'EEE', 'Associate Professor & SAC In-charge'),
         ]
         faculties = []
         for name, email, d_code, desig in faculty_data:
             fac, _ = Faculty.objects.get_or_create(
                 email=email,
-                defaults={'name': name, 'department': departments[d_code], 'designation': desig, 'phone': '+91 9876543210'}
+                defaults={'name': name, 'department': departments[d_code], 'designation': desig, 'phone': '+91 8818284710'}
             )
             faculties.append(fac)
-        self.stdout.write(self.style.SUCCESS(f'Created {len(faculties)} faculty members.'))
+        self.stdout.write(self.style.SUCCESS(f'Created {len(faculties)} NIT AP faculty members.'))
 
         # 3. Users
         # Admin
         admin_user, created = User.objects.get_or_create(
             username='admin',
             defaults={
-                'email': 'admin@harshax.edu',
-                'first_name': 'Chief',
+                'email': 'admin@nitandhra.ac.in',
+                'first_name': 'NITAP',
                 'last_name': 'Administrator',
                 'role': User.ADMIN,
                 'is_staff': True,
                 'is_superuser': True,
-                'phone': '+91 9900112233',
+                'phone': '+91 8818284700',
                 'avatar_url': 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
             }
         )
@@ -74,7 +82,7 @@ class Command(BaseCommand):
         org_user, created = User.objects.get_or_create(
             username='organizer',
             defaults={
-                'email': 'organizer@harshax.edu',
+                'email': 'organizer@nitandhra.ac.in',
                 'first_name': 'Vikram',
                 'last_name': 'Aditya',
                 'role': User.ORGANIZER,
@@ -88,8 +96,8 @@ class Command(BaseCommand):
             OrganizerProfile.objects.get_or_create(
                 user=org_user,
                 defaults={
-                    'organization_name': 'Campus Technical Affairs Council',
-                    'designation': 'Lead Convener',
+                    'organization_name': 'ASCII & NIT AP Student Affairs Council',
+                    'designation': 'Lead Student Convener',
                     'department': departments['CSE'],
                     'verified': True
                 }
@@ -99,7 +107,7 @@ class Command(BaseCommand):
         harsha_user, created = User.objects.get_or_create(
             username='harsha',
             defaults={
-                'email': 'harsha@student.campus.edu',
+                'email': 'harsha@student.nitandhra.ac.in',
                 'first_name': 'Harsha',
                 'last_name': 'Vardhan',
                 'role': User.STUDENT,
@@ -113,12 +121,12 @@ class Command(BaseCommand):
             StudentProfile.objects.get_or_create(
                 user=harsha_user,
                 defaults={
-                    'roll_number': '21BCE1042',
+                    'roll_number': '9211042',
                     'department': departments['CSE'],
                     'year_of_study': 3,
                     'semester': 6,
-                    'bio': 'Passionate Full-Stack Developer & Cloud Architect. Building the future with React, Django & MySQL.',
-                    'interests': ['AI/ML', 'Web Development', 'Hackathons', 'Robotics']
+                    'bio': 'Passionate Full-Stack Developer & Cloud Architect at NIT Andhra Pradesh. Technical Lead for ASCII.',
+                    'interests': ['Hackathons', 'Web Development', 'AI/ML', 'Competitive Coding']
                 }
             )
 
@@ -126,7 +134,7 @@ class Command(BaseCommand):
         student_user, created = User.objects.get_or_create(
             username='student',
             defaults={
-                'email': 'student@campus.edu',
+                'email': 'aarav@student.nitandhra.ac.in',
                 'first_name': 'Aarav',
                 'last_name': 'Patel',
                 'role': User.STUDENT,
@@ -140,23 +148,23 @@ class Command(BaseCommand):
             StudentProfile.objects.get_or_create(
                 user=student_user,
                 defaults={
-                    'roll_number': '22BIT1015',
-                    'department': departments['IT'],
+                    'roll_number': '9221015',
+                    'department': departments['ECE'],
                     'year_of_study': 2,
                     'semester': 4,
-                    'bio': 'Competitive programmer & Photography enthusiast.',
-                    'interests': ['Photography', 'Music', 'Competitive Coding']
+                    'bio': 'ECE enthusiast & Core Member of Pixel Photography Club at NIT Andhra Pradesh.',
+                    'interests': ['Photography', 'Music', 'Robotics']
                 }
             )
 
-        # 4. Venues
+        # 4. Campus Venues at NIT Andhra Pradesh
         venues_data = [
-            ('Dr. APJ Abdul Kalam Grand Auditorium', 'Main Academic Complex, Block A', 1200, True, True),
-            ('Sir M. Visvesvaraya Innovation Hall', 'Technology Incubation Center, 3rd Floor', 450, True, True),
-            ('Aryabhata Open Air Amphitheatre', 'Campus Central Lake Lawn', 2500, True, True),
-            ('Alan Turing Advanced Computing Lab', 'Computer Sciences Wing, Lab 402', 180, True, True),
-            ('Rabindranath Tagore Cultural Center', 'Student Activity Center, South Wing', 850, True, True),
-            ('Vikram Sarabhai Seminar Hall', 'Department of ECE, 2nd Floor', 300, True, True),
+            ('Dr. B. R. Ambedkar Central Auditorium', 'Main Academic Complex, NIT AP Campus', 1200, True, True),
+            ('Student Activity Centre (SAC)', 'Central Campus, South Wing', 850, True, True),
+            ('CSE Department Seminar Hall', 'Academic Block-3, 2nd Floor', 250, True, True),
+            ('Open Air Theatre (OAT Grounds)', 'Central Lake Lawn, NIT AP', 3000, True, True),
+            ('Central Library Audio-Visual Hall', 'Central Library Complex, 1st Floor', 350, True, True),
+            ('Sports Complex & Main Pavilion Ground', 'NIT AP Athletic Arena', 1500, False, True),
         ]
         venues = []
         for name, loc, cap, proj, sound in venues_data:
@@ -165,20 +173,21 @@ class Command(BaseCommand):
                 defaults={'location': loc, 'capacity': cap, 'has_projector': proj, 'has_sound_system': sound}
             )
             venues.append(v)
-        self.stdout.write(self.style.SUCCESS(f'Created {len(venues)} venues.'))
+        self.stdout.write(self.style.SUCCESS(f'Created {len(venues)} NIT AP venues.'))
 
         # 5. Categories
         categories_data = [
-            ('Technical', 'Code, build, and engineer next-generation software and hardware.'),
-            ('Cultural', 'Celebrate tradition, creativity, drama, and artistic expression.'),
-            ('Hackathons', 'Intense 24 to 36-hour sprint challenges to build innovative solutions.'),
-            ('Workshops', 'Hands-on skill building led by senior industry mentors and alumni.'),
-            ('Art & Painting', 'Canvas exhibitions, live speed painting, and digital sketching.'),
-            ('Photography', 'Photo walks, street photography, and aesthetic capture contests.'),
-            ('Music & Dance', 'High-energy musical battles, choir symphonies, and choreography.'),
-            ('Sports', 'Inter-department athletic meets, esports, football, and badminton.'),
-            ('Seminars', 'Keynotes, technology talks, research symposiums, and career panels.'),
-            ('Festivals', 'Mega annual campus festivals and cultural celebrations.'),
+            ('Department Associations', 'Official student associations across CSE, ECE, EEE, Mech, Civil, Biotech, and MME.'),
+            ('Technical', 'Code, build, hackathons, robotics, and engineering innovation.'),
+            ('Cultural', 'Music, dance, fine arts, drama, and celebration of traditions at NIT AP.'),
+            ('Hackathons', 'Sprint coding, open-source challenges, and AI solution marathons.'),
+            ('Workshops', 'Hands-on tech bootcamps, hardware tinkering, and career workshops.'),
+            ('Art & Painting', 'Canvas exhibitions, sketching, and campus wall murals with Kala Club.'),
+            ('Photography', 'Campus photowalks, cinematography, and aesthetic captures by Pixel.'),
+            ('Music & Dance', 'Acoustic jam sessions, choreo face-offs, and live rock band nights.'),
+            ('Sports', 'Inter-branch tournaments, Prahelika athletic meet, and esports leagues.'),
+            ('Seminars', 'Keynotes, alumni panels, guest lectures, and research symposiums.'),
+            ('Festivals', 'Mega annual campus festivals including Vulcanzy and Technodaya.'),
         ]
         categories = {}
         for name, desc in categories_data:
@@ -186,18 +195,18 @@ class Command(BaseCommand):
             categories[name] = cat
         self.stdout.write(self.style.SUCCESS(f'Created {len(categories)} categories.'))
 
-        # 6. Clubs
+        # 6. Clubs & Associations at NIT Andhra Pradesh
         clubs_data = [
-            ('Coding Club', 'Code. Build. Innovate.', 'The premier software engineering and algorithms club of the campus.', 'Technical', 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&auto=format&fit=crop&q=80'),
-            ('Robotics Club', 'Engineering Autonomous Tomorrow', 'Designing autonomous drones, competitive rovers, and IoT automated systems.', 'Technical', 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&auto=format&fit=crop&q=80'),
-            ('Painting Club', 'Colors of Campus Imagination', 'Fine arts, oil painting, digital illustration, and campus wall murals.', 'Art & Painting', 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=1200&auto=format&fit=crop&q=80'),
-            ('Photography Club', 'Freeze The Campus Moments', 'Capturing stories, campus life, aesthetic portraits, and wildlife photography.', 'Photography', 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=1200&auto=format&fit=crop&q=80'),
-            ('Cultural Club', 'Heartbeat of Campus Festivities', 'Drama, theatre, cultural exchanges, street plays, and festive celebrations.', 'Cultural', 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1200&auto=format&fit=crop&q=80'),
-            ('Music Club', 'Symphony & Sound Waves', 'Live rock bands, acoustic jam circles, instrumental harmony, and vocal choir.', 'Music & Dance', 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200&auto=format&fit=crop&q=80'),
-            ('Dance Club', 'Rhythm, Beats & Grace', 'Contemporary, hip-hop, classical fusion, and national inter-college dance faceoffs.', 'Music & Dance', 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1547153760-18fc86324498?w=1200&auto=format&fit=crop&q=80'),
-            ('Literary Club', 'Words, Debates & Eloquence', 'Parliamentary debates, model united nations, poetry slams, and creative writing.', 'Cultural', 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=1200&auto=format&fit=crop&q=80'),
-            ('Sports Club', 'Champions on the Field', 'Inter-branch athletics, basketball tournaments, football leagues, and fitness.', 'Sports', 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=1200&auto=format&fit=crop&q=80'),
-            ('Entrepreneurship Club', 'Ideas That Scale', 'Startup incubator, angel pitches, venture capital discussions, and hackathons.', 'Technical', 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=80'),
+            ('ASCII - Computer Science Association', 'Code. Innovate. Transcend.', 'The premier student association of the Department of Computer Science & Engineering at NIT Andhra Pradesh. Organizes national hackathons, code sprints, technical symposiums, and developer workshops.', 'Department Associations', 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&auto=format&fit=crop&q=80'),
+            ('ECEA - Electronics Association', 'Connecting Signals, Powering Dreams', 'The official association of the Department of Electronics & Communication Engineering at NIT Andhra Pradesh. Conducting workshops on VLSI, Embedded Systems, IoT, and Signal Processing.', 'Department Associations', 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=1200&auto=format&fit=crop&q=80'),
+            ('C-Coding Club NIT AP', 'Think. Code. Deploy.', 'The official competitive programming and software engineering community of NIT Andhra Pradesh. Conducting weekly Codeforces/LeetCode contests, web dev hackathons, and open-source sprints.', 'Technical', 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=1200&auto=format&fit=crop&q=80'),
+            ('Robotics & Automation Society', 'Engineering Autonomous Tomorrow', 'The premier robotics and mechatronics body of NIT AP. Building drones, autonomous rovers, battlebots, and robotic manipulators.', 'Technical', 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=1200&auto=format&fit=crop&q=80'),
+            ('Kala - Fine Arts Club', 'Colors of NITian Imagination', 'The fine arts club of NIT Andhra Pradesh. Organizes canvas exhibitions, live speed painting, digital art masterclasses, and campus murals.', 'Art & Painting', 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1460661419201-fd4cecdf8a8b?w=1200&auto=format&fit=crop&q=80'),
+            ('Swara - Music Society', 'Symphonies & Acoustic Jams', 'The official music society of NIT AP. Home to vocalists, guitarists, drummers, and classical instrumentalists. Hosts unplugged acoustic nights and band battles.', 'Music & Dance', 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200&auto=format&fit=crop&q=80'),
+            ('Nrithya - Dance Club', 'Rhythm, Beats & Grace', 'The premier dance troupe of NIT Andhra Pradesh, performing classical Bharatanatyam, western hip-hop, contemporary, and street choreography.', 'Music & Dance', 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1547153760-18fc86324498?w=1200&auto=format&fit=crop&q=80'),
+            ('Pixel - Photography Club', 'Freezing Campus Memories', 'The official photography and cinematography body of NIT AP. Covering major campus fests, sports meets, and photo walks across Andhra Pradesh.', 'Photography', 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=1200&auto=format&fit=crop&q=80'),
+            ('Literary & Debating Society (LDS)', 'Words, Wit & Diplomacy', 'Organizes parliamentary debates, youth parliaments, Model United Nations (MUN), creative writing, and quiz championships at NIT AP.', 'Cultural', 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=1200&auto=format&fit=crop&q=80'),
+            ('E-Cell NIT Andhra Pradesh', 'From Campus Ideas to Unicorns', 'The Entrepreneurship Cell fostering student startups, incubation support, angel investor connect, and the annual E-Summit.', 'Technical', 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=80'),
         ]
         clubs = {}
         for name, tag, desc, cat, l_url, c_url in clubs_data:
@@ -224,14 +233,14 @@ class Command(BaseCommand):
             Announcement.objects.get_or_create(
                 club=c,
                 author=org_user,
-                title=f'Welcome to the 2026 Season of {c.name}!',
+                title=f'Welcome to the 2026 Academic Season of {c.name} at NIT AP!',
                 defaults={
-                    'content': f'We are excited to welcome all new and returning members. Check out our upcoming flagship projects, workshops, and weekly meetups.',
+                    'content': f'Welcome NITians! We are thrilled to kick off this semester with marquee hackathons, workshops, and inter-collegiate events. Stay tuned to HarshaX for registration details.',
                     'is_pinned': True
                 }
             )
 
-        self.stdout.write(self.style.SUCCESS(f'Created {len(clubs)} clubs with memberships and announcements.'))
+        self.stdout.write(self.style.SUCCESS(f'Created {len(clubs)} clubs and associations.'))
 
         # 7. Events
         now = timezone.now()
@@ -239,53 +248,75 @@ class Command(BaseCommand):
 
         events_data = [
             {
-                'title': 'National Hackathon 2026: CodeSphere',
-                'category': 'Hackathons',
-                'club': 'Coding Club',
+                'title': 'Vulcanzy 2026: Annual Socio-Cultural Festival',
+                'category': 'Festivals',
+                'club': 'ASCII - Computer Science Association',
                 'venue': venues[0],
-                'poster_url': 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&auto=format&fit=crop&q=80',
-                'start_date': today + datetime.timedelta(days=7),
-                'end_date': today + datetime.timedelta(days=9),
-                'start_time': datetime.time(9, 0),
-                'end_time': datetime.time(18, 0),
-                'registration_deadline': now + datetime.timedelta(days=5),
-                'max_participants': 250,
+                'poster_url': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80',
+                'start_date': today + datetime.timedelta(days=12),
+                'end_date': today + datetime.timedelta(days=14),
+                'start_time': datetime.time(16, 0),
+                'end_time': datetime.time(22, 30),
+                'registration_deadline': now + datetime.timedelta(days=10),
+                'max_participants': 2500,
                 'registration_fee': 0.00,
                 'is_featured': True,
                 'status': 'PUBLISHED',
-                'description': 'Join India\'s premier collegiate hackathon! 36 hours of non-stop innovation, developer mentorship, cash prizes worth ₹1,50,000, and direct internship opportunities with leading tech firms. Themes include Generative AI, Decentralized Systems, and Green Tech.',
-                'rules': 'Teams must consist of 2 to 4 members. All code must be written during the hackathon. Plagiarism or pre-built prototypes will result in disqualification.',
+                'description': 'Vulcanzy is the flagship annual socio-cultural festival of National Institute of Technology Andhra Pradesh! Three electrifying days filled with celebrity musical nights, battle of bands, choreo showdowns, fashion pageants, art installations, and multi-cuisine food fests. NIT AP On-Duty (OD) attendance provided for all registered student coordinators.',
+                'rules': 'NIT Andhra Pradesh Student ID card is strictly mandatory for campus entry. Outside food, unauthorized recording gear, and alcohol/contraband are strictly prohibited.',
                 'student_coordinator_name': 'Harsha Vardhan',
                 'student_coordinator_contact': '+91 9123456789',
-                'contact_email': 'hackathon@harshax.edu',
-                'budget': 180000.00,
+                'contact_email': 'vulcanzy@nitandhra.ac.in',
+                'budget': 500000.00,
             },
             {
-                'title': 'Vibrant Cultural Fest: Tarang 2026',
-                'category': 'Cultural',
-                'club': 'Cultural Club',
+                'title': 'ASCII CodeSprint 2026: 24-Hour National Hackathon',
+                'category': 'Hackathons',
+                'club': 'ASCII - Computer Science Association',
                 'venue': venues[2],
-                'poster_url': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1200&auto=format&fit=crop&q=80',
-                'start_date': today + datetime.timedelta(days=14),
-                'end_date': today + datetime.timedelta(days=16),
-                'start_time': datetime.time(16, 0),
-                'end_time': datetime.time(22, 0),
-                'registration_deadline': now + datetime.timedelta(days=12),
-                'max_participants': 1500,
-                'registration_fee': 100.00,
+                'poster_url': 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&auto=format&fit=crop&q=80',
+                'start_date': today + datetime.timedelta(days=6),
+                'end_date': today + datetime.timedelta(days=7),
+                'start_time': datetime.time(9, 0),
+                'end_time': datetime.time(17, 0),
+                'registration_deadline': now + datetime.timedelta(days=4),
+                'max_participants': 300,
+                'registration_fee': 0.00,
                 'is_featured': True,
                 'status': 'PUBLISHED',
-                'description': 'Tarang is the mega annual cultural festival of HarshaX! Three evenings of high-voltage musical performances, celebrity DJ nights, dramatic theatre showdowns, fashion pageants, and food stalls.',
-                'rules': 'College ID cards are strictly mandatory for entry. Outside food, beverages, and bags are subject to security screening.',
-                'student_coordinator_name': 'Rohan Sen',
-                'student_coordinator_contact': '+91 9876540011',
-                'contact_email': 'cultural@harshax.edu',
-                'budget': 350000.00,
+                'description': 'Organized by ASCII (CSE Association) in collaboration with C-Coding Club at NIT Andhra Pradesh. 24 hours of non-stop coding, developer mentorship, cash prizes worth ₹1,50,000, and placement referral opportunities. Tracks: Generative AI, Web3, Distributed Cloud, and Smart Campus Solutions.',
+                'rules': 'Teams must consist of 2 to 4 students. All code repositories must be initiated during the hackathon. High-speed campus Wi-Fi and power hubs provided in Academic Block-3.',
+                'student_coordinator_name': 'Harsha Vardhan',
+                'student_coordinator_contact': '+91 9123456789',
+                'contact_email': 'ascii@nitandhra.ac.in',
+                'budget': 175000.00,
+            },
+            {
+                'title': 'Technodaya 2026: All-India Technical Symposium',
+                'category': 'Technical',
+                'club': 'Robotics & Automation Society',
+                'venue': venues[1],
+                'poster_url': 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&auto=format&fit=crop&q=80',
+                'start_date': today + datetime.timedelta(days=18),
+                'end_date': today + datetime.timedelta(days=19),
+                'start_time': datetime.time(9, 30),
+                'end_time': datetime.time(17, 30),
+                'registration_deadline': now + datetime.timedelta(days=16),
+                'max_participants': 600,
+                'registration_fee': 150.00,
+                'is_featured': True,
+                'status': 'PUBLISHED',
+                'description': 'The premier national technical symposium of NIT Andhra Pradesh. Features RoboWars, Line Follower Arena, CAD Modeling Sprint, Paper Presentations, and Embedded IoT Showcases. Top projects win research publication grants.',
+                'rules': 'Open to all engineering students across India. Working prototypes must comply with safety voltage standards (<24V).',
+                'student_coordinator_name': 'Vikram Aditya',
+                'student_coordinator_contact': '+91 9811223344',
+                'contact_email': 'technodaya@nitandhra.ac.in',
+                'budget': 220000.00,
             },
             {
                 'title': 'Autonomous Robotics & Drone Workshop',
                 'category': 'Workshops',
-                'club': 'Robotics Club',
+                'club': 'Robotics & Automation Society',
                 'venue': venues[1],
                 'poster_url': 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=1200&auto=format&fit=crop&q=80',
                 'start_date': today + datetime.timedelta(days=4),
@@ -294,20 +325,20 @@ class Command(BaseCommand):
                 'end_time': datetime.time(16, 30),
                 'registration_deadline': now + datetime.timedelta(days=2),
                 'max_participants': 120,
-                'registration_fee': 250.00,
+                'registration_fee': 0.00,
                 'is_featured': True,
                 'status': 'PUBLISHED',
-                'description': 'Get hands-on experience assembling quadcopter drones, calibrating flight controllers, and programming computer-vision obstacle avoidance with ROS2 and OpenCV.',
-                'rules': 'Hardware kits are provided per team. Laptops with Ubuntu or WSL recommended for programming sessions.',
-                'student_coordinator_name': 'Ananya Roy',
-                'student_coordinator_contact': '+91 9887766554',
-                'contact_email': 'robotics@harshax.edu',
+                'description': 'Hands-on training assembling quadcopter drones, flight controllers, and ROS2 computer-vision at NIT Andhra Pradesh.',
+                'rules': 'Hardware kits provided by NIT AP Robotics Club. Laptops with Ubuntu/WSL recommended.',
+                'student_coordinator_name': 'Aarav Patel',
+                'student_coordinator_contact': '+91 9234567890',
+                'contact_email': 'robotics@nitandhra.ac.in',
                 'budget': 85000.00,
             },
             {
-                'title': 'Kaleidoscope: Live Canvas Art & Mural Contest',
+                'title': 'Kala Utsav 2026: Live Art & Mural Exhibition',
                 'category': 'Art & Painting',
-                'club': 'Painting Club',
+                'club': 'Kala - Fine Arts Club',
                 'venue': venues[4],
                 'poster_url': 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=1200&auto=format&fit=crop&q=80',
                 'start_date': today + datetime.timedelta(days=10),
@@ -316,20 +347,20 @@ class Command(BaseCommand):
                 'end_time': datetime.time(17, 0),
                 'registration_deadline': now + datetime.timedelta(days=8),
                 'max_participants': 80,
-                'registration_fee': 50.00,
+                'registration_fee': 0.00,
                 'is_featured': True,
                 'status': 'PUBLISHED',
-                'description': 'Unleash your artistic soul on a grand canvas. Themed around "Futuristic Utopias", participants get 4 hours to paint their vision with acrylics, pastels, and mixed media.',
-                'rules': 'Canvases and basic easels are provided. Artists may bring their own specialty brushes and paints.',
+                'description': 'Unleash your artistic soul at the Central Library Lawn. Themed around "Futuristic NIT Andhra Pradesh", live acrylic and mixed media canvas painting.',
+                'rules': 'Canvases and easels provided by Kala Club. OD attendance provided.',
                 'student_coordinator_name': 'Divya Krishnan',
                 'student_coordinator_contact': '+91 9776655443',
-                'contact_email': 'artclub@harshax.edu',
+                'contact_email': 'kala@nitandhra.ac.in',
                 'budget': 40000.00,
             },
             {
-                'title': 'Frames of Life: Street Photography Contest',
+                'title': 'Pixel Frames: NIT AP Campus PhotoWalk & Contest',
                 'category': 'Photography',
-                'club': 'Photography Club',
+                'club': 'Pixel - Photography Club',
                 'venue': venues[2],
                 'poster_url': 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=1200&auto=format&fit=crop&q=80',
                 'start_date': today + datetime.timedelta(days=18),
@@ -341,18 +372,18 @@ class Command(BaseCommand):
                 'registration_fee': 0.00,
                 'is_featured': True,
                 'status': 'PUBLISHED',
-                'description': 'A 4-hour photowalk through the historic campus architecture and surrounding city avenues. Capture unscripted emotion, shadows, and reflections.',
-                'rules': 'Photos must be submitted in RAW + JPEG. Minimal color correction allowed; generative manipulation strictly banned.',
+                'description': 'A 4-hour photowalk through NIT Andhra Pradesh modern architecture, lush central lawn, and Tadepalligudem lake surroundings.',
+                'rules': 'Photos must be captured during the walk. RAW + JPEG submission.',
                 'student_coordinator_name': 'Aarav Patel',
                 'student_coordinator_contact': '+91 9234567890',
-                'contact_email': 'photo@harshax.edu',
+                'contact_email': 'pixel@nitandhra.ac.in',
                 'budget': 30000.00,
             },
             {
-                'title': 'Sonic Eclipse: Battle of the Campus Bands',
+                'title': 'Swara Unplugged: Live Acoustic Night & Battle of Bands',
                 'category': 'Music & Dance',
-                'club': 'Music Club',
-                'venue': venues[0],
+                'club': 'Swara - Music Society',
+                'venue': venues[3],
                 'poster_url': 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=1200&auto=format&fit=crop&q=80',
                 'start_date': today + datetime.timedelta(days=22),
                 'end_date': today + datetime.timedelta(days=22),
@@ -363,62 +394,18 @@ class Command(BaseCommand):
                 'registration_fee': 0.00,
                 'is_featured': True,
                 'status': 'PUBLISHED',
-                'description': 'Campus rock and acoustic bands clash for the golden trophy! Featuring original compositions and electrifying covers with professional studio lighting and concert audio.',
-                'rules': 'Each band is allotted 20 minutes on stage including sound check. Drum kit and PA provided; guitarists bring their pedals.',
+                'description': 'Swara Music Society presents acoustic harmony, rock band riffs, and regional fusion at the Open Air Theatre (OAT) of NIT Andhra Pradesh.',
+                'rules': 'College ID required for entry at OAT grounds.',
                 'student_coordinator_name': 'Kabir Mehra',
                 'student_coordinator_contact': '+91 9665544332',
-                'contact_email': 'music@harshax.edu',
+                'contact_email': 'swara@nitandhra.ac.in',
                 'budget': 120000.00,
             },
             {
-                'title': 'AI & Quantum Computing Summit 2026',
+                'title': 'E-Summit NIT Andhra Pradesh: Startup Pitch Arena',
                 'category': 'Technical',
-                'club': 'Coding Club',
-                'venue': venues[3],
-                'poster_url': 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&auto=format&fit=crop&q=80',
-                'start_date': today + datetime.timedelta(days=1),
-                'end_date': today + datetime.timedelta(days=2),
-                'start_time': datetime.time(9, 30),
-                'end_time': datetime.time(17, 0),
-                'registration_deadline': now + datetime.timedelta(hours=24),
-                'max_participants': 150,
-                'registration_fee': 0.00,
-                'is_featured': False,
-                'status': 'PUBLISHED',
-                'description': 'Distinguished scientists and Silicon Valley AI researchers discuss Large Multimodal Models, Qubit coherence, and next-gen quantum cryptography.',
-                'rules': 'Open to undergraduate and graduate scholars. Certificate of attendance provided.',
-                'student_coordinator_name': 'Harsha Vardhan',
-                'student_coordinator_contact': '+91 9123456789',
-                'contact_email': 'summit@harshax.edu',
-                'budget': 95000.00,
-            },
-            {
-                'title': 'Inter-College Badminton Championship',
-                'category': 'Sports',
-                'club': 'Sports Club',
-                'venue': venues[4],
-                'poster_url': 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=1200&auto=format&fit=crop&q=80',
-                'start_date': today + datetime.timedelta(days=11),
-                'end_date': today + datetime.timedelta(days=13),
-                'start_time': datetime.time(8, 0),
-                'end_time': datetime.time(18, 0),
-                'registration_deadline': now + datetime.timedelta(days=9),
-                'max_participants': 120,
-                'registration_fee': 150.00,
-                'is_featured': False,
-                'status': 'PUBLISHED',
-                'description': 'Men and Women singles, doubles, and mixed doubles badminton championship. Yonex Mavis 350 shuttles will be used on indoor wooden courts.',
-                'rules': 'Non-marking court shoes compulsory. BWF standard tournament rules apply.',
-                'student_coordinator_name': 'Siddharth Nair',
-                'student_coordinator_contact': '+91 9554433221',
-                'contact_email': 'sports@harshax.edu',
-                'budget': 50000.00,
-            },
-            {
-                'title': 'NextGen Startup Pitch Arena',
-                'category': 'Technical',
-                'club': 'Entrepreneurship Club',
-                'venue': venues[5],
+                'club': 'E-Cell NIT Andhra Pradesh',
+                'venue': venues[1],
                 'poster_url': 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=1200&auto=format&fit=crop&q=80',
                 'start_date': today + datetime.timedelta(days=25),
                 'end_date': today + datetime.timedelta(days=25),
@@ -428,18 +415,18 @@ class Command(BaseCommand):
                 'max_participants': 100,
                 'registration_fee': 0.00,
                 'is_featured': False,
-                'status': 'PENDING_APPROVAL',
-                'description': 'Pitch your venture in front of accredited venture capitalists and angel networks. Top 3 startups receive equity-free seed grants and 6-month incubator access.',
+                'status': 'PUBLISHED',
+                'description': 'Pitch your venture in front of accredited venture capitalists and angel networks. Top 3 startups receive equity-free seed grants and incubation support at NIT AP.',
                 'rules': '5-minute pitch deck followed by 3-minute jury Q&A. Functional prototype or MVP required.',
                 'student_coordinator_name': 'Harsha Vardhan',
                 'student_coordinator_contact': '+91 9123456789',
-                'contact_email': 'e-cell@harshax.edu',
+                'contact_email': 'ecell@nitandhra.ac.in',
                 'budget': 150000.00,
             },
             {
                 'title': 'AI Game Development Bootcamp [Completed]',
                 'category': 'Workshops',
-                'club': 'Coding Club',
+                'club': 'C-Coding Club NIT AP',
                 'venue': venues[3],
                 'poster_url': 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format&fit=crop&q=80',
                 'start_date': today - datetime.timedelta(days=5),
@@ -466,7 +453,7 @@ class Command(BaseCommand):
                 title=ed['title'],
                 defaults={
                     'category': categories[ed['category']],
-                    'club': clubs[ed['club']],
+                    'club': clubs.get(ed['club'], list(clubs.values())[0]),
                     'venue': ed['venue'],
                     'organizer': org_user,
                     'poster_url': ed['poster_url'],
@@ -607,7 +594,7 @@ class Command(BaseCommand):
         # 9. Gallery Albums and Images
         album, _ = GalleryAlbum.objects.get_or_create(
             event=completed_event,
-            club=clubs['Coding Club'],
+            club=clubs.get('C-Coding Club NIT AP', list(clubs.values())[0]),
             title='AI Game Dev Bootcamp 2026 Highlights',
             defaults={'description': 'Memorable moments from the 3-day intense Unreal Engine game development sprint.'}
         )

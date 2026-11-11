@@ -86,10 +86,30 @@ export const Navbar = () => {
       }}
     >
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {/* Brand Logo */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center' }} title="HarshaX Home">
-          <Logo variant="horizontal" height={38} />
-        </Link>
+        {/* Brand Logo & College Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Link to="/" style={{ display: 'flex', alignItems: 'center' }} title="HarshaX Home">
+            <Logo variant="horizontal" height={38} />
+          </Link>
+          <div
+            style={{
+              padding: '4px 10px',
+              borderRadius: 20,
+              background: 'rgba(168, 85, 247, 0.08)',
+              border: '1px solid rgba(168, 85, 247, 0.2)',
+              color: 'var(--primary-purple)',
+              fontSize: '0.74rem',
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+            NIT Andhra Pradesh
+          </div>
+        </div>
 
         {/* Desktop Navigation Links */}
         <div style={{ display: 'none', alignItems: 'center', gap: 32 }} className="desktop-links">

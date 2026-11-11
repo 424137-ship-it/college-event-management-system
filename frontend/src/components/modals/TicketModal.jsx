@@ -73,10 +73,15 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
           >
             <X size={18} />
           </button>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 2 }}>
-            <Logo variant="icon" height={20} />
-            <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, opacity: 0.95 }}>
-              HarshaX Official Pass
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Logo variant="icon" height={18} />
+              <span style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800, opacity: 0.95 }}>
+                NIT Andhra Pradesh • Official Pass
+              </span>
+            </div>
+            <span style={{ fontSize: '0.68rem', opacity: 0.85, letterSpacing: '0.04em' }}>
+              National Institute of Technology Andhra Pradesh
             </span>
           </div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: 4 }}>
@@ -138,6 +143,13 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
                 <CheckCircle2 size={13} /> {registration.status || 'Confirmed'}
               </span>
             </div>
+          </div>
+
+          {/* Campus Gate Notice */}
+          <div style={{ marginTop: 14, padding: '8px 14px', background: 'rgba(168, 85, 247, 0.06)', borderRadius: 10, width: '100%', textAlign: 'center' }}>
+            <p style={{ fontSize: '0.74rem', color: 'var(--muted-text)', margin: 0 }}>
+              🏛️ Official Entry Pass for NIT AP Campus Venues. Present QR at Central Auditorium / SAC gate for OD Attendance.
+            </p>
           </div>
 
           {/* Actions */}

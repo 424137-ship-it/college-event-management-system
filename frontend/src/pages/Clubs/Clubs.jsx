@@ -27,7 +27,7 @@ export const Clubs = () => {
     fetchClubs();
   }, []);
 
-  const categories = ['ALL', 'Technical', 'Cultural', 'Art & Painting', 'Photography', 'Music & Dance', 'Sports'];
+  const categories = ['ALL', 'Department Associations', 'Technical', 'Cultural', 'Art & Painting', 'Photography', 'Music & Dance', 'Sports'];
 
   const filteredClubs = clubs.filter((c) => {
     const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -41,13 +41,13 @@ export const Clubs = () => {
       {/* Heading */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <span className="badge badge-purple" style={{ marginBottom: 12 }}>
-          CAMPUS COMMUNITIES
+          NIT ANDHRA PRADESH • COMMUNITIES
         </span>
         <h1 style={{ fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontWeight: 800, color: 'var(--dark-navy)' }}>
-          Find Your Community
+          Clubs & Department Associations
         </h1>
-        <p style={{ color: 'var(--muted-text)', fontSize: '1.05rem', marginTop: 8, maxWidth: 560, margin: '8px auto 0 auto' }}>
-          Connect with people who share your interests, learn new skills, and build projects together.
+        <p style={{ color: 'var(--muted-text)', fontSize: '1.05rem', marginTop: 8, maxWidth: 620, margin: '8px auto 0 auto' }}>
+          Explore departmental associations (ASCII, ECEA, MESA) and student societies (Coding Club, Kala, Swara, Pixel, Robotics, E-Cell) at NIT Andhra Pradesh.
         </p>
         {(isOrganizer || isAdmin) && (
           <div style={{ marginTop: 20 }}>
