@@ -129,7 +129,7 @@ export const EventCard = ({ event, onSaveToggle }) => {
         {/* Organizing Club & OD Badge */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <span style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--primary-purple)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            {event.club_name || 'NIT AP Campus'}
+            {event.club_name || 'NIT Campus'}
           </span>
           <span style={{ padding: '2px 8px', borderRadius: 6, background: '#ECFDF5', color: '#059669', fontSize: '0.7rem', fontWeight: 700 }}>
             🎓 OD Provided
@@ -172,7 +172,7 @@ export const EventCard = ({ event, onSaveToggle }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <MapPin size={15} color="var(--accent-blue)" />
             <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {event.venue_name || 'Auditorium, NIT AP'}
+              {event.venue_name || 'Auditorium, NIT'}
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -206,7 +206,7 @@ export const EventCard = ({ event, onSaveToggle }) => {
               e.preventDefault();
               e.stopPropagation();
               const shareUrl = `${window.location.origin}/events/${event.id}`;
-              const msg = `Hey! Check out "${event.title}" happening at NIT Andhra Pradesh: ${shareUrl}`;
+              const msg = `Hey! Check out "${event.title}" happening at National Institute of Technology (NIT): ${shareUrl}`;
               window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
             }}
             title="Share on WhatsApp"

@@ -14,7 +14,7 @@ const FALLBACK_IMAGES = [
     id: 1,
     album: 1,
     image_url: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&fit=crop&q=80',
-    caption: 'Vulcanzy Pro-Night: Star Concert at Central OAT, NIT AP',
+    caption: 'Vulcanzy Pro-Night: Star Concert at Central OAT, NIT',
     event_title: 'Vulcanzy 2026',
   },
   {
@@ -49,7 +49,7 @@ const FALLBACK_IMAGES = [
     id: 6,
     album: 2,
     image_url: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=800&fit=crop&q=80',
-    caption: 'Industry Mentorship session for NIT AP engineering founders',
+    caption: 'Industry Mentorship session for NIT engineering founders',
     event_title: 'E-Cell Venture Pitch',
   },
 ];
@@ -73,7 +73,7 @@ export const Gallery = () => {
         setAlbums(albumList.length > 0 ? albumList : FALLBACK_ALBUMS);
         setImages(imageList.length > 0 ? imageList : FALLBACK_IMAGES);
       } catch (err) {
-        console.warn('Backend connecting; serving fallback gallery for NIT AP.', err);
+        console.warn('Backend connecting; serving fallback gallery for NIT.', err);
         setAlbums(FALLBACK_ALBUMS);
         setImages(FALLBACK_IMAGES);
       } finally {

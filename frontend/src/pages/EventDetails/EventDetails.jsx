@@ -40,7 +40,7 @@ export const EventDetails = () => {
           });
         }
       } catch (err) {
-        console.warn('Backend connecting; checking fallback event for NIT AP...', err);
+        console.warn('Backend connecting; checking fallback event for NIT...', err);
         const fallback = FALLBACK_EVENTS.find((e) => String(e.id) === String(id) || e.slug === String(id)) || FALLBACK_EVENTS[0];
         if (fallback) {
           setEvent(fallback);
@@ -97,18 +97,18 @@ export const EventDetails = () => {
       if (err.response?.data?.error || err.response?.data?.message) {
         toast.error(err.response?.data?.error || err.response?.data?.message);
       } else {
-        // Offline / preview fallback registration for NIT AP
+        // Offline / preview fallback registration for NIT
         setEvent((prev) => ({
           ...prev,
           is_registered: true,
           registered_count: (prev.registered_count || 0) + 1,
         }));
         setTicketData({
-          ticket_code: `NITAP-${Math.floor(100000 + Math.random() * 900000)}`,
+          ticket_code: `NIT-${Math.floor(100000 + Math.random() * 900000)}`,
           event_title: event?.title || 'Campus Event',
           event_start_date: event?.start_date,
           event_start_time: event?.start_time || '17:00:00',
-          venue_name: event?.venue_name || 'Dr. B.R. Ambedkar Auditorium, NIT AP',
+          venue_name: event?.venue_name || 'Dr. B.R. Ambedkar Auditorium, NIT',
           user_full_name: user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username,
           user_roll_number: user?.student_profile?.roll_number || '424137',
           created_at: new Date().toISOString(),
@@ -121,7 +121,7 @@ export const EventDetails = () => {
           origin: { y: 0.6 },
           colors: ['#A855F7', '#8B9DFF', '#D8B4FE', '#10B981'],
         });
-        toast.success('Registration Confirmed! Official NIT AP E-Ticket issued.');
+        toast.success('Registration Confirmed! Official NIT E-Ticket issued.');
       }
     } finally {
       setRegistering(false);

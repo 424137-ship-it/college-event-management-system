@@ -20,13 +20,13 @@ export const Footer = () => {
             <Logo variant="horizontal" height={38} />
           </Link>
           <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--primary-purple)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            National Institute of Technology Andhra Pradesh
+            National Institute of Technology (NIT)
           </div>
           <p style={{ fontSize: '0.88rem', color: 'var(--muted-text)', lineHeight: 1.6 }}>
-            The centralized campus event, departmental associations (ASCII, ECEA, MESA) & clubs portal of NIT Andhra Pradesh. Empowering hackathons, Vulcanzy, and student initiatives.
+            The centralized campus event, departmental associations (ASCII, ECEA, MESA) & clubs portal of National Institute of Technology (NIT). Empowering hackathons, Vulcanzy, and student initiatives.
           </p>
           <p style={{ fontSize: '0.8rem', color: 'var(--muted-text)' }}>
-            📍 Tadepalligudem, West Godavari District, Andhra Pradesh - 534101
+            📍 National Institute of Technology (NIT) Campus
           </p>
           <div style={{ display: 'flex', gap: 12 }}>
             <a

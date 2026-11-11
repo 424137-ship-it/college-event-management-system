@@ -78,7 +78,7 @@ export const Events = () => {
           setEvents(getFilteredFallbackEvents(selectedCategory, selectedVenue, searchQuery));
         }
       } catch (err) {
-        console.warn('Backend connecting; serving fallback events for NIT AP campus.', err);
+        console.warn('Backend connecting; serving fallback events for NIT campus.', err);
         setEvents(getFilteredFallbackEvents(selectedCategory, selectedVenue, searchQuery));
       } finally {
         setLoading(false);

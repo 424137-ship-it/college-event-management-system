@@ -21,7 +21,7 @@ export const Clubs = () => {
         const clubList = res.data?.results || res.data || [];
         setClubs(clubList.length > 0 ? clubList : FALLBACK_CLUBS);
       } catch (err) {
-        console.warn('Backend connecting; loading NIT Andhra Pradesh clubs showcase.', err);
+        console.warn('Backend connecting; loading National Institute of Technology clubs showcase.', err);
         setClubs(FALLBACK_CLUBS);
       } finally {
         setLoading(false);
@@ -44,13 +44,13 @@ export const Clubs = () => {
       {/* Heading */}
       <div style={{ textAlign: 'center', marginBottom: 40 }}>
         <span className="badge badge-purple" style={{ marginBottom: 12 }}>
-          NIT ANDHRA PRADESH • COMMUNITIES
+          NATIONAL INSTITUTE OF TECHNOLOGY (NIT) • COMMUNITIES
         </span>
         <h1 style={{ fontSize: 'clamp(2rem, 4vw, 2.8rem)', fontWeight: 800, color: 'var(--dark-navy)' }}>
           Clubs & Department Associations
         </h1>
         <p style={{ color: 'var(--muted-text)', fontSize: '1.05rem', marginTop: 8, maxWidth: 620, margin: '8px auto 0 auto' }}>
-          Explore departmental associations (ASCII, ECEA, MESA) and student societies (Coding Club, Kala, Swara, Pixel, Robotics, E-Cell) at NIT Andhra Pradesh.
+          Explore departmental associations (ASCII, ECEA, MESA) and student societies (Coding Club, Kala, Swara, Pixel, Robotics, E-Cell) at National Institute of Technology (NIT).
         </p>
         {(isOrganizer || isAdmin) && (
           <div style={{ marginTop: 20 }}>

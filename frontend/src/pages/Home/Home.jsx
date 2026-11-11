@@ -23,7 +23,7 @@ export const Home = () => {
   });
   const [loading, setLoading] = useState(true);
 
-  // Live Countdown to Vulcanzy 2026 at NIT AP
+  // Live Countdown to Vulcanzy 2026 at NIT
   const [timeLeft, setTimeLeft] = useState({ days: 12, hours: 8, minutes: 24, seconds: 40 });
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export const Home = () => {
           setStats(FALLBACK_STATS);
         }
       } catch (err) {
-        console.warn('Backend offline or warming up; displaying NIT Andhra Pradesh showcase data.', err);
+        console.warn('Backend offline or warming up; displaying National Institute of Technology showcase data.', err);
         setFeaturedEvents(FALLBACK_EVENTS.slice(0, 6));
         setPopularClubs(FALLBACK_CLUBS.slice(0, 4));
         setStats(FALLBACK_STATS);
@@ -97,7 +97,7 @@ export const Home = () => {
               className="badge badge-purple"
               style={{ marginBottom: 18, padding: '7px 18px', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: 8 }}
             >
-              <Sparkles size={15} /> National Institute of Technology Andhra Pradesh • HarshaX 2.0
+              <Sparkles size={15} /> National Institute of Technology (NIT) • HarshaX 2.0
             </div>
 
             <h1
@@ -122,7 +122,7 @@ export const Home = () => {
                 maxWidth: 550,
               }}
             >
-              The official centralized campus event and club engagement portal of NIT Andhra Pradesh. Discover technical symposiums, Vulcanzy socio-cultural fest, and connect with departmental associations (ASCII, ECEA, MESA) and student clubs.
+              The official centralized campus event and club engagement portal of National Institute of Technology (NIT). Discover technical symposiums, Vulcanzy socio-cultural fest, and connect with departmental associations (ASCII, ECEA, MESA) and student clubs.
             </p>
 
             {/* Hero Quick Search Bar */}
@@ -384,7 +384,7 @@ export const Home = () => {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span className="badge badge-purple" style={{ fontSize: '0.72rem' }}>MARQUEE FESTIVAL</span>
-                <span style={{ fontSize: '0.8rem', color: 'var(--muted-text)', fontWeight: 600 }}>NIT Andhra Pradesh</span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--muted-text)', fontWeight: 600 }}>National Institute of Technology</span>
               </div>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--dark-navy)', marginTop: 2 }}>
                 Vulcanzy 2026 • Annual Socio-Cultural Festival

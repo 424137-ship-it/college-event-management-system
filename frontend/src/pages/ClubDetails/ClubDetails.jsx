@@ -52,7 +52,7 @@ export const ClubDetails = () => {
           setClubEvents(relatedEvents.length > 0 ? relatedEvents : [FALLBACK_EVENTS[0]]);
         }
       } catch (err) {
-        console.warn('Backend connecting; using fallback club profile for NIT AP...', err);
+        console.warn('Backend connecting; using fallback club profile for NIT...', err);
         const fallback = FALLBACK_CLUBS.find((c) => String(c.id) === String(id) || c.slug === String(id)) || FALLBACK_CLUBS[0];
         setClub(fallback);
       } finally {

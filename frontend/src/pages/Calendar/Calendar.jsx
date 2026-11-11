@@ -35,7 +35,7 @@ export const CalendarPage = () => {
         const onDay = finalEvents.filter((e) => e.start_date === selectedDateStr);
         setSelectedDayEvents(onDay);
       } catch (err) {
-        console.warn('Backend connecting; serving fallback calendar data for NIT AP.', err);
+        console.warn('Backend connecting; serving fallback calendar data for NIT.', err);
         const finalEvents = FALLBACK_EVENTS.map((e) => ({
           ...e,
           start_date: e.start_date.split('T')[0],

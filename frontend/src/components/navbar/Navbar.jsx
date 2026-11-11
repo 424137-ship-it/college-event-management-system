@@ -107,7 +107,7 @@ export const Navbar = () => {
             }}
           >
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
-            NIT Andhra Pradesh
+            National Institute of Technology • NIT
           </div>
         </div>
 

@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
       toast.success(`Welcome back, ${userData.first_name || userData.username}!`);
       return userData;
     } catch (err) {
-      // Offline / Preview Demo Accounts fallback for NIT Andhra Pradesh
+      // Offline / Preview Demo Accounts fallback for National Institute of Technology (NIT)
       const u = (credentials.username || '').toLowerCase();
       if (!err.response && (u === 'harsha' || u === 'organizer' || u === 'admin')) {
         let role = 'STUDENT';
@@ -77,13 +77,13 @@ export const AuthProvider = ({ children }) => {
           fullName = 'Campus Organizer';
         } else if (u === 'admin') {
           role = 'ADMIN';
-          fullName = 'NIT AP Administrator';
+          fullName = 'NIT Administrator';
         }
 
         const demoUser = {
           id: 999,
           username: u,
-          email: `${u}@nitandhra.ac.in`,
+          email: `${u}@nit.ac.in`,
           first_name: fullName.split(' ')[0],
           last_name: fullName.split(' ')[1] || '',
           role: role,
@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('harshax_user', JSON.stringify(demoUser));
         setToken('demo-token');
         setUser(demoUser);
-        toast.success(`Welcome to NIT AP Portal, ${demoUser.first_name}! (Campus Preview)`);
+        toast.success(`Welcome to NIT Portal, ${demoUser.first_name}! (Campus Preview)`);
         return demoUser;
       }
 
