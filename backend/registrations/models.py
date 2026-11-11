@@ -32,14 +32,18 @@ class EventRegistration(models.Model):
 
         # Generate QR code if missing
         if not self.qr_code:
+            import hmac
+            import hashlib
             qr = qrcode.QRCode(
                 version=1,
                 error_correction=qrcode.constants.ERROR_CORRECT_M,
                 box_size=8,
                 border=2,
             )
-            # Ticket verification payload
-            ticket_data = f"HARSHAX_TICKET:{self.registration_id}"
+            # Digitally signed ticket verification payload (HMAC-SHA256)
+            secret = getattr(settings, 'SECRET_KEY', 'default-key').encode('utf-8')
+            sig = hmac.new(secret, self.registration_id.encode('utf-8'), hashlib.sha256).hexdigest()[:12]
+            ticket_data = f"NIT_TICKET:{self.registration_id}:{sig}"
             qr.add_data(ticket_data)
             qr.make(fit=True)
             img = qr.make_image(fill_color="#17152B", back_color="#FFFFFF")

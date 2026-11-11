@@ -170,6 +170,14 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 12,
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '120/minute',
+        'user': '1200/minute',
+    },
 }
 
 # Simple JWT Configuration
@@ -185,7 +193,7 @@ SIMPLE_JWT = {
 
 # CORS & CSRF Configuration
 CORS_ALLOW_ALL_ORIGINS = True  # Allows smooth local and cloud pairing
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = False  # Avoids invalid CORS header conflict with wildcard origins
 
 csrf_trusted = os.getenv('CSRF_TRUSTED_ORIGINS', '')
 if csrf_trusted:

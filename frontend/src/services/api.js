@@ -104,6 +104,7 @@ export const registrationsAPI = {
 export const attendanceAPI = {
   verifyTicket: (data) => api.post('/attendance/verify/', data),
   getRecords: (params) => api.get('/attendance/', { params }),
+  exportODUrl: (eventId) => `${API_BASE_URL}/attendance/export_od/?event_id=${eventId}`,
 };
 
 export const budgetsAPI = {

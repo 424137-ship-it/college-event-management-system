@@ -330,3 +330,39 @@ class HarshaXComprehensiveIntegrationTests(TestCase):
         self.assertIn('qr_code_data_url', reg_data)
         self.assertTrue(reg_data['qr_code_data_url'].startswith('data:image/png;base64,'))
 
+    def test_venue_double_booking_prevention(self):
+        """Test that scheduling an overlapping event at the same venue is rejected"""
+        self.client.force_authenticate(user=self.organizer)
+        res = self.client.post('/api/events/', {
+            'title': 'Overlapping Event',
+            'category': self.category.id,
+            'venue': self.venue.id,
+            'club': self.club.id,
+            'start_date': str(self.event.start_date),
+            'end_date': str(self.event.end_date),
+            'start_time': '12:00:00',
+            'end_time': '16:00:00',
+            'registration_deadline': str(self.event.registration_deadline).replace('+00:00', 'Z'),
+            'description': 'Trying to double book',
+            'max_participants': 100,
+            'registration_fee': '0.00',
+            'status': 'PUBLISHED'
+        })
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('venue', res.data)
+        self.assertIn('Venue conflict', str(res.data['venue']))
+
+    def test_od_attendance_csv_export(self):
+        """Test On-Duty (OD) CSV roster export for academic section"""
+        # Register and mark attendance
+        reg = EventRegistration.objects.create(event=self.event, user=self.student, status='CONFIRMED')
+        Attendance.objects.create(registration=reg, verified_by=self.organizer, method='QR_SCAN')
+
+        self.client.force_authenticate(user=self.organizer)
+        res = self.client.get(f'/api/attendance/export_od/?event_id={self.event.id}')
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res['Content-Type'], 'text/csv')
+        content = res.content.decode('utf-8')
+        self.assertIn('APPROVED_OD_ATTENDANCE', content)
+        self.assertIn(self.student.username, content)
+

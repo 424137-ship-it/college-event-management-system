@@ -83,9 +83,11 @@ class RegisterSerializer(serializers.ModelSerializer):
 
         # Validate super admin signup
         if role == 'ADMIN':
-            allowed_keys = ['ADMIN2026', 'admin123', 'HARSHAX_ADMIN', 'CAMPUSX_ADMIN', 'admin']
-            if admin_secret_key not in allowed_keys:
-                raise serializers.ValidationError({'admin_secret_key': 'Invalid Admin Secret Key. Use ADMIN2026 for Super Admin signup.'})
+            import os
+            # Read admin secret from environment variable; defaults to institutional setup key if unset
+            admin_env_key = os.getenv('ADMIN_REGISTRATION_SECRET', 'ADMIN2026')
+            if admin_secret_key != admin_env_key:
+                raise serializers.ValidationError({'admin_secret_key': 'Invalid Admin Secret Key. Registration rejected.'})
 
             user = User(
                 username=validated_data['username'],
@@ -128,7 +130,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                 organization_name=organization_name or f"{user.first_name}'s Club Association",
                 designation=designation or 'Lead Organizer',
                 department=dept,
-                verified=True,
+                verified=False,  # Requires administrator review before hosting events
             )
             return user
 

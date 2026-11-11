@@ -17,6 +17,15 @@ class ClubViewSet(viewsets.ModelViewSet):
             return [IsOrganizerUserRole()]
         return [permissions.AllowAny()]
 
+    def check_object_permissions(self, request, obj):
+        super().check_object_permissions(request, obj)
+        if self.action in ['update', 'partial_update', 'destroy']:
+            if request.user.role == 'ADMIN' or request.user.is_superuser:
+                return
+            if obj.president != request.user:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("You can only modify or manage clubs where you are the designated President/Lead.")
+
     def perform_create(self, serializer):
         user = self.request.user
         club = serializer.save(president=user if user.is_authenticated else None, is_active=True)
@@ -63,4 +72,11 @@ class AnnouncementViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        user = self.request.user
+        club = serializer.validated_data.get('club')
+        if club and user.role != 'ADMIN' and not user.is_superuser:
+            is_lead = ClubMembership.objects.filter(club=club, user=user, role__in=['LEAD', 'OFFICER']).exists()
+            if club.president != user and not is_lead:
+                from rest_framework.exceptions import PermissionDenied
+                raise PermissionDenied("Only club leaders and presidents can post official announcements.")
+        serializer.save(author=user)

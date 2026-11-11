@@ -138,3 +138,49 @@ class EventCreateUpdateSerializer(serializers.ModelSerializer):
         model = Event
         fields = '__all__'
         read_only_fields = ['id', 'slug', 'organizer', 'created_at', 'updated_at']
+
+    def validate(self, data):
+        start_date = data.get('start_date') or (self.instance.start_date if self.instance else None)
+        end_date = data.get('end_date') or (self.instance.end_date if self.instance else None)
+        start_time = data.get('start_time') or (self.instance.start_time if self.instance else None)
+        end_time = data.get('end_time') or (self.instance.end_time if self.instance else None)
+        deadline = data.get('registration_deadline') or (self.instance.registration_deadline if self.instance else None)
+        max_p = data.get('max_participants') if 'max_participants' in data else (self.instance.max_participants if self.instance else 100)
+        fee = data.get('registration_fee') if 'registration_fee' in data else (self.instance.registration_fee if self.instance else 0)
+        venue = data.get('venue') or (self.instance.venue if self.instance else None)
+
+        if start_date and end_date and end_date < start_date:
+            raise serializers.ValidationError({'end_date': 'End date cannot be earlier than start date.'})
+
+        if start_date and end_date and start_date == end_date and start_time and end_time:
+            if end_time <= start_time:
+                raise serializers.ValidationError({'end_time': 'End time must be after start time on the same date.'})
+
+        if deadline and end_date and deadline.date() > end_date:
+            raise serializers.ValidationError({'registration_deadline': 'Registration deadline cannot be after the event end date.'})
+
+        if max_p is not None and max_p <= 0:
+            raise serializers.ValidationError({'max_participants': 'Max participants capacity must be greater than zero.'})
+
+        if fee is not None and fee < 0:
+            raise serializers.ValidationError({'registration_fee': 'Registration fee cannot be negative.'})
+
+        # Overlapping venue reservation check
+        if venue and start_date and end_date and start_time and end_time:
+            overlapping = Event.objects.filter(
+                venue=venue,
+                status__in=['APPROVED', 'PUBLISHED'],
+                start_date__lte=end_date,
+                end_date__gte=start_date,
+                start_time__lt=end_time,
+                end_time__gt=start_time,
+            )
+            if self.instance:
+                overlapping = overlapping.exclude(pk=self.instance.pk)
+            if overlapping.exists():
+                conflict = overlapping.first()
+                raise serializers.ValidationError({
+                    'venue': f"Venue conflict: '{venue.name}' is already reserved for '{conflict.title}' during this time."
+                })
+
+        return data

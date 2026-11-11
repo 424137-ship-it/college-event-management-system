@@ -41,7 +41,7 @@ export const Navbar = () => {
         }
       };
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 30000); // 30s polling
+      const interval = setInterval(fetchNotifications, 120000); // 2 min polling to prevent server flooding
       return () => clearInterval(interval);
     }
   }, [user]);

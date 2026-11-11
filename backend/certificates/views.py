@@ -86,9 +86,11 @@ def generate_pdf_certificate(cert):
     p.line(width - 240, 120, width - 100, 120)
 
     # Footer verification
+    import os
+    frontend_url = os.getenv('FRONTEND_URL', 'https://college-event-management-system.vercel.app').rstrip('/')
     p.setFont("Helvetica", 9)
     p.setFillColor(colors.HexColor('#77738B'))
-    p.drawCentredString(width / 2.0, 50, f"Certificate ID: {cert.certificate_id}  |  Verify online at http://localhost:5173/verify-certificate/{cert.certificate_id}")
+    p.drawCentredString(width / 2.0, 50, f"Certificate ID: {cert.certificate_id}  |  Verify online at {frontend_url}/verify-certificate/{cert.certificate_id}")
 
     p.showPage()
     p.save()
@@ -103,6 +105,25 @@ class CertificateViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'destroy']:
             return [IsOrganizerUserRole()]
         return [permissions.IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        event = serializer.validated_data.get('event')
+        recipient_user = serializer.validated_data.get('user')
+
+        # Organizer authorization check: must own event or be admin
+        if user.role != 'ADMIN' and not user.is_superuser and event.organizer != user:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You can only issue certificates for events you organize.")
+
+        # Ensure recipient student was registered for this event
+        from registrations.models import EventRegistration
+        if not EventRegistration.objects.filter(event=event, user=recipient_user, status='CONFIRMED').exists():
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError({'user': f"Student '{recipient_user.username}' does not have a confirmed registration for '{event.title}'."})
+
+        recipient_name = serializer.validated_data.get('recipient_name') or recipient_user.get_full_name() or recipient_user.username
+        serializer.save(recipient_name=recipient_name)
 
     def get_queryset(self):
         user = self.request.user
