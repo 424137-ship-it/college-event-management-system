@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Sparkles, Eye, EyeOff, Lock, User, ArrowRight, ShieldCheck, UserCheck, GraduationCap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { Logo } from '../../components/common/Logo';
 
 export const Login = () => {
   const { login } = useAuth();
@@ -79,20 +80,8 @@ export const Login = () => {
       >
         {/* Logo & Heading */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div
-            style={{
-              width: 44,
-              height: 44,
-              borderRadius: 14,
-              background: 'linear-gradient(135deg, #A855F7 0%, #8B9DFF 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              margin: '0 auto 12px auto',
-            }}
-          >
-            <Sparkles size={24} />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <Logo variant="icon" height={52} />
           </div>
           <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--dark-navy)' }}>
             Welcome to HarshaX

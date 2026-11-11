@@ -7,6 +7,7 @@ import {
 import { authAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
+import { Logo } from '../../components/common/Logo';
 
 export const Register = () => {
   const { register } = useAuth();
@@ -131,20 +132,8 @@ export const Register = () => {
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div
-            style={{
-              width: 48,
-              height: 48,
-              borderRadius: 16,
-              background: 'linear-gradient(135deg, #A855F7 0%, #8B9DFF 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              margin: '0 auto 12px auto',
-            }}
-          >
-            <Sparkles size={26} />
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
+            <Logo variant="icon" height={52} />
           </div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--dark-navy)' }}>
             Join HarshaX Platform

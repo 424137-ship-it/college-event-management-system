@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Heart, Globe, Mail, ShieldCheck } from 'lucide-react';
+import { Logo } from './Logo';
 
 export const Footer = () => {
   return (
@@ -15,25 +16,9 @@ export const Footer = () => {
       <div style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 40, marginBottom: 50 }}>
         {/* Brand column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 10,
-                background: 'linear-gradient(135deg, #A855F7 0%, #8B9DFF 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#FFFFFF',
-              }}
-            >
-              <Sparkles size={20} />
-            </div>
-            <span style={{ fontSize: '1.3rem', fontWeight: 800, color: 'var(--dark-navy)' }}>
-              Harsha<span style={{ color: 'var(--primary-purple)' }}>X</span>
-            </span>
-          </div>
+          <Link to="/" style={{ display: 'inline-block' }} title="HarshaX">
+            <Logo variant="horizontal" height={38} />
+          </Link>
           <p style={{ fontSize: '0.9rem', color: 'var(--muted-text)', lineHeight: 1.6 }}>
             The futuristic centralized college event and club management system. Empowering campus ideas, hackathons, and activities.
           </p>

@@ -7,6 +7,7 @@ import {
   Bell, LogIn, UserPlus, Menu, X, LayoutDashboard, LogOut,
   User as UserIcon, ShieldAlert, CheckCircle2, ChevronDown
 } from 'lucide-react';
+import { Logo } from '../common/Logo';
 
 export const Navbar = () => {
   const { user, logout, isAdmin, isOrganizer } = useAuth();
@@ -86,27 +87,8 @@ export const Navbar = () => {
     >
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {/* Brand Logo */}
-        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 12,
-              background: 'linear-gradient(135deg, #A855F7 0%, #8B9DFF 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#FFFFFF',
-              boxShadow: '0 4px 12px rgba(168, 85, 247, 0.4)',
-            }}
-          >
-            <Sparkles size={22} />
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <span style={{ fontSize: '1.4rem', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--dark-navy)' }}>
-              Harsha<span style={{ color: 'var(--primary-purple)' }}>X</span>
-            </span>
-          </div>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center' }} title="HarshaX Home">
+          <Logo variant="horizontal" height={38} />
         </Link>
 
         {/* Desktop Navigation Links */}

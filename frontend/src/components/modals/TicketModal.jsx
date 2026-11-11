@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Calendar, MapPin, CheckCircle2, Download, Printer } from 'lucide-react';
+import { Logo } from '../common/Logo';
 
 export const TicketModal = ({ registration, isOpen, onClose }) => {
   if (!isOpen || !registration) return null;
@@ -71,9 +72,12 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
           >
             <X size={18} />
           </button>
-          <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, opacity: 0.9 }}>
-            HarshaX Official Pass
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 2 }}>
+            <Logo variant="icon" height={20} />
+            <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 700, opacity: 0.95 }}>
+              HarshaX Official Pass
+            </span>
+          </div>
           <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginTop: 4 }}>
             {registration.event_title}
           </h2>
