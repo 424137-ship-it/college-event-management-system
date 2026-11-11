@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import {
   Calendar, Clock, MapPin, Users, Bookmark, Share2, CalendarPlus,
-  ShieldCheck, AlertCircle, CheckCircle2, ArrowLeft, Mail, Phone, User, Edit3
+  ShieldCheck, AlertCircle, CheckCircle2, ArrowLeft, ArrowRight, Mail, Phone, User, Edit3
 } from 'lucide-react';
 import { eventsAPI, registrationsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -275,7 +275,7 @@ export const EventDetails = () => {
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, fontSize: '0.9rem', color: '#E9E1F7' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Calendar size={18} color="#D8B4FE" />
-              <span>{event.start_date} to {event.end_date}</span>
+              <span>{event.start_date || 'Date TBA'}{event.end_date && event.end_date !== event.start_date ? ` to ${event.end_date}` : ''}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Clock size={18} color="#D8B4FE" />
@@ -407,7 +407,7 @@ export const EventDetails = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <span style={{ fontSize: '0.9rem', color: 'var(--muted-text)' }}>Registration Fee</span>
               <span style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--dark-navy)' }}>
-                {parseFloat(event.registration_fee) === 0 ? 'FREE' : `₹${event.registration_fee}`}
+                {Number(event?.registration_fee || 0) === 0 ? 'FREE' : `₹${Number(event.registration_fee).toFixed(2)}`}
               </span>
             </div>
 
