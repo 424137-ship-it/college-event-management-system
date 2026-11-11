@@ -196,6 +196,10 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'Created {len(categories)} categories.'))
 
         # 6. Clubs & Associations at National Institute of Technology
+        # Purge any legacy generic placeholder clubs or fake test clubs
+        legacy_fake_names = ['PNP', 'Coding Club', 'Robotics Club', 'Painting Club', 'Photography Club', 'Cultural Club', 'Music Club', 'Dance Club', 'Literary Club', 'Sports Club', 'Entrepreneurship Club']
+        Club.objects.filter(name__in=legacy_fake_names).delete()
+
         clubs_data = [
             ('ASCII - Computer Science Association', 'Code. Innovate. Transcend.', 'The premier student association of the Department of Computer Science & Engineering at National Institute of Technology. Organizes national hackathons, code sprints, technical symposiums, and developer workshops.', 'Department Associations', 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=1200&auto=format&fit=crop&q=80'),
             ('ECEA - Electronics Association', 'Connecting Signals, Powering Dreams', 'The official association of the Department of Electronics & Communication Engineering at National Institute of Technology. Conducting workshops on VLSI, Embedded Systems, IoT, and Signal Processing.', 'Department Associations', 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1508739773434-c26b3d09e071?w=1200&auto=format&fit=crop&q=80'),
@@ -207,6 +211,7 @@ class Command(BaseCommand):
             ('Pixel - Photography Club', 'Freezing Campus Memories', 'The official photography and cinematography body of NIT. Covering major campus fests, sports meets, and campus photo walks.', 'Photography', 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1452587925148-ce544e77e70d?w=1200&auto=format&fit=crop&q=80'),
             ('Literary & Debating Society (LDS)', 'Words, Wit & Diplomacy', 'Organizes parliamentary debates, youth parliaments, Model United Nations (MUN), creative writing, and quiz championships at NIT.', 'Cultural', 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=1200&auto=format&fit=crop&q=80'),
             ('E-Cell National Institute of Technology', 'From Campus Ideas to Unicorns', 'The Entrepreneurship Cell fostering student startups, incubation support, angel investor connect, and the annual E-Summit.', 'Technical', 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&auto=format&fit=crop&q=80'),
+            ('NIT Sports Association', 'Speed. Stamina. Sportsmanship.', 'The official collegiate athletic and sports body of National Institute of Technology. Organizing inter-branch leagues, Prahelika annual sports meet, badminton championships, and national NIT tournaments.', 'Sports', 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=800&auto=format&fit=crop&q=80', 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=1200&auto=format&fit=crop&q=80'),
         ]
         clubs = {}
         for name, tag, desc, cat, l_url, c_url in clubs_data:
@@ -243,6 +248,10 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'Created {len(clubs)} clubs and associations.'))
 
         # 7. Events
+        # Purge fake or duplicate dummy events
+        fake_event_titles = ['painting', 'DVKLND', 'National Hackathon 2026: CodeSphere', 'Vibrant Cultural Fest: Tarang 2026', 'Kaleidoscope: Live Canvas Art & Mural Contest', 'Frames of Life: Street Photography Contest', 'Sonic Eclipse: Battle of the Campus Bands', 'NextGen Startup Pitch Arena']
+        Event.objects.filter(title__in=fake_event_titles).delete()
+
         now = timezone.now()
         today = now.date()
 
@@ -444,6 +453,50 @@ class Command(BaseCommand):
                 'student_coordinator_contact': '+91 9123456789',
                 'contact_email': 'gamedev@harshax.edu',
                 'budget': 60000.00,
+            },
+            {
+                'title': 'AI & Quantum Computing Summit 2026',
+                'category': 'Technical',
+                'club': 'ASCII - Computer Science Association',
+                'venue': venues[2],
+                'poster_url': 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&auto=format&fit=crop&q=80',
+                'start_date': today,
+                'end_date': today + datetime.timedelta(days=1),
+                'start_time': datetime.time(9, 0),
+                'end_time': datetime.time(20, 0),
+                'registration_deadline': now + datetime.timedelta(hours=6),
+                'max_participants': 300,
+                'registration_fee': 0.00,
+                'is_featured': True,
+                'status': 'PUBLISHED',
+                'description': 'Live national symposium featuring keynotes on Quantum Algorithms, Hybrid QPU architectures, and Large Language Models. Live interactive panels happening today in CSE Seminar Hall.',
+                'rules': 'College ID required for entry.',
+                'student_coordinator_name': 'Harsha Vardhan',
+                'student_coordinator_contact': '+91 9123456789',
+                'contact_email': 'ascii@nit.ac.in',
+                'budget': 95000.00,
+            },
+            {
+                'title': 'NIT Inter-Branch Badminton & Sports Championship',
+                'category': 'Sports',
+                'club': 'NIT Sports Association',
+                'venue': venues[5],
+                'poster_url': 'https://images.unsplash.com/photo-1517649763962-0c623266ddc0?w=1200&auto=format&fit=crop&q=80',
+                'start_date': today + datetime.timedelta(days=8),
+                'end_date': today + datetime.timedelta(days=9),
+                'start_time': datetime.time(9, 0),
+                'end_time': datetime.time(18, 0),
+                'registration_deadline': now + datetime.timedelta(days=6),
+                'max_participants': 200,
+                'registration_fee': 0.00,
+                'is_featured': False,
+                'status': 'PUBLISHED',
+                'description': 'Annual inter-departmental badminton championship at the NIT Main Sports Arena Pavilion. Singles, doubles, and mixed doubles fixtures.',
+                'rules': 'Standard BWF rules apply. Feather shuttles provided by the sports council.',
+                'student_coordinator_name': 'Aarav Patel',
+                'student_coordinator_contact': '+91 9234567890',
+                'contact_email': 'sports@nit.ac.in',
+                'budget': 50000.00,
             }
         ]
 
