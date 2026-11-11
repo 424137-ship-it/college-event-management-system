@@ -48,6 +48,7 @@ AUTH_USER_MODEL = 'accounts.User'
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -76,25 +77,31 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database configuration: MySQL with automatic DATABASE_URL support
+# Database configuration: Cloud DB with automatic DATABASE_URL support (MySQL & PostgreSQL)
 DATABASE_URL = os.getenv('DATABASE_URL')
 if DATABASE_URL:
     from urllib.parse import urlparse
     parsed = urlparse(DATABASE_URL)
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': parsed.path.lstrip('/'),
-            'USER': parsed.username,
-            'PASSWORD': parsed.password,
-            'HOST': parsed.hostname,
-            'PORT': parsed.port or 3306,
-            'OPTIONS': {
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            },
-        }
+    is_postgres = parsed.scheme in ['postgres', 'postgresql']
+    
+    db_config = {
+        'NAME': parsed.path.lstrip('/'),
+        'USER': parsed.username,
+        'PASSWORD': parsed.password,
+        'HOST': parsed.hostname,
+        'PORT': parsed.port or (5432 if is_postgres else 3306),
     }
+    
+    if is_postgres:
+        db_config['ENGINE'] = 'django.db.backends.postgresql'
+    else:
+        db_config['ENGINE'] = 'django.db.backends.mysql'
+        db_config['OPTIONS'] = {
+            'charset': 'utf8mb4',
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        }
+        
+    DATABASES = {'default': db_config}
 else:
     DB_NAME = os.getenv('DB_NAME', 'campusx_db')
     DB_USER = os.getenv('DB_USER', 'root')
