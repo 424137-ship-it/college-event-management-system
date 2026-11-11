@@ -16,7 +16,7 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
       ? registration.qr_code.startsWith('http')
         ? registration.qr_code
         : `${BACKEND_URL}${registration.qr_code}`
-      : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=HARSHAX_TICKET:${registration.registration_id}`);
+      : `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=NIT_TICKET:${registration.registration_id}`);
 
   return (
     <div
@@ -135,6 +135,24 @@ export const TicketModal = ({ registration, isOpen, onClose }) => {
               <span style={{ color: 'var(--muted-text)' }}>Venue:</span>
               <span style={{ fontWeight: 600, color: 'var(--dark-navy)' }}>
                 {registration.venue_name || 'Campus Venue'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--muted-text)' }}>Payment:</span>
+              <span
+                style={{
+                  padding: '2px 8px',
+                  borderRadius: 6,
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  background: registration.payment_status === 'PAID' ? 'rgba(168, 85, 247, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                  color: registration.payment_status === 'PAID' ? '#A855F7' : '#059669',
+                  border: `1px solid ${registration.payment_status === 'PAID' ? 'rgba(168, 85, 247, 0.3)' : 'rgba(16, 185, 129, 0.3)'}`,
+                }}
+              >
+                {registration.payment_status === 'PAID'
+                  ? `PAID ${registration.payment_reference ? `• ${registration.payment_reference.slice(0, 15)}` : ''}`
+                  : 'FREE PASS'}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

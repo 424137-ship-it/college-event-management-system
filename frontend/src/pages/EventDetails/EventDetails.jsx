@@ -9,6 +9,7 @@ import { eventsAPI, registrationsAPI } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { TicketModal } from '../../components/modals/TicketModal';
 import { EditEventModal } from '../../components/modals/EditEventModal';
+import { RegisterConfirmModal } from '../../components/modals/RegisterConfirmModal';
 import { toast } from 'react-toastify';
 import { FALLBACK_EVENTS } from '../../utils/fallbackData';
 
@@ -20,6 +21,7 @@ export const EventDetails = () => {
   const [loading, setLoading] = useState(true);
   const [registering, setRegistering] = useState(false);
   const [ticketModalOpen, setTicketModalOpen] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [ticketData, setTicketData] = useState(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
 
@@ -54,16 +56,27 @@ export const EventDetails = () => {
     fetchEvent();
   }, [id, user]);
 
-  const handleRegister = async () => {
+  const handleOpenRegisterModal = () => {
     if (!user) {
       toast.info('Please sign in to register for campus events.');
       navigate('/login', { state: { from: { pathname: `/events/${id}` } } });
       return;
     }
+    if (event?.is_registered) {
+      setTicketModalOpen(true);
+      return;
+    }
+    setConfirmModalOpen(true);
+  };
 
+  const handleConfirmRegistration = async (paymentToken) => {
     setRegistering(true);
     try {
-      const res = await registrationsAPI.register(id);
+      const payload = {
+        event_id: id,
+        ...(paymentToken ? { payment_token: paymentToken } : {}),
+      };
+      const res = await registrationsAPI.register(payload);
       const reg = res.data.registration;
       toast.success(res.data.message || 'Registration confirmed!');
 
@@ -88,10 +101,11 @@ export const EventDetails = () => {
         event_start_date: event.start_date,
         event_start_time: event.start_time,
         venue_name: event.venue_name,
-        user_full_name: user.first_name ? `${user.first_name} ${user.last_name || ''}` : user.username,
-        user_roll_number: user.student_profile?.roll_number,
+        user_full_name: user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username,
+        user_roll_number: user?.student_profile?.roll_number,
       });
 
+      setConfirmModalOpen(false);
       setTicketModalOpen(true);
     } catch (err) {
       if (err.response?.data?.error || err.response?.data?.message) {
@@ -113,7 +127,10 @@ export const EventDetails = () => {
           user_roll_number: user?.student_profile?.roll_number || '424137',
           created_at: new Date().toISOString(),
           status: 'CONFIRMED',
+          payment_status: paymentToken ? 'PAID' : 'FREE',
+          payment_reference: paymentToken || 'FREE_REGISTRATION',
         });
+        setConfirmModalOpen(false);
         setTicketModalOpen(true);
         confetti({
           particleCount: 80,
@@ -407,7 +424,7 @@ export const EventDetails = () => {
               </div>
             ) : event.is_registration_open ? (
               <button
-                onClick={handleRegister}
+                onClick={handleOpenRegisterModal}
                 disabled={registering}
                 className="btn-primary"
                 style={{ width: '100%', padding: '14px', fontSize: '1rem' }}
@@ -508,6 +525,15 @@ export const EventDetails = () => {
           onClose={() => setTicketModalOpen(false)}
         />
       )}
+
+      {/* Registration Confirmation & Payment Modal */}
+      <RegisterConfirmModal
+        event={event}
+        isOpen={confirmModalOpen}
+        onClose={() => setConfirmModalOpen(false)}
+        onConfirm={handleConfirmRegistration}
+        loading={registering}
+      />
     </div>
   );
 };

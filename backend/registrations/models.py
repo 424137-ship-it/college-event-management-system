@@ -16,6 +16,8 @@ class EventRegistration(models.Model):
     event = models.ForeignKey('events.Event', on_delete=models.CASCADE, related_name='registrations')
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='registrations')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='CONFIRMED')
+    payment_status = models.CharField(max_length=20, default='FREE')
+    payment_reference = models.CharField(max_length=120, blank=True, default='')
     qr_code = models.ImageField(upload_to='ticket_qrs/', blank=True, null=True)
     registered_at = models.DateTimeField(auto_now_add=True)
 

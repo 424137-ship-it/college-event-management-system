@@ -95,7 +95,10 @@ export const clubsAPI = {
 };
 
 export const registrationsAPI = {
-  register: (eventId) => api.post('/registrations/', { event_id: eventId }),
+  register: (data) => {
+    const payload = typeof data === 'object' && data !== null ? data : { event_id: data };
+    return api.post('/registrations/', payload);
+  },
   getMyRegistrations: (params) => api.get('/registrations/', { params }),
   cancel: (id) => api.post(`/registrations/${id}/cancel/`),
   getSavedEvents: () => api.get('/saved-events/'),

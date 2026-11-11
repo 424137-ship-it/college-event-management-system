@@ -61,20 +61,47 @@ class EventRegistrationViewSet(viewsets.ModelViewSet):
                 if current_count >= event.max_participants:
                     return Response({'error': 'This event has reached full participant capacity.'}, status=status.HTTP_400_BAD_REQUEST)
 
-                # 5. Create Registration (QR is generated automatically in model save)
+                # 5. Check payment requirement for paid events
+                fee = float(event.registration_fee or 0)
+                if fee > 0:
+                    payment_token = (
+                        request.data.get('payment_token')
+                        or request.data.get('payment_reference')
+                        or request.data.get('transaction_id')
+                    )
+                    if not payment_token or not str(payment_token).strip():
+                        return Response({
+                            'error': f'Payment required: This event requires a registration fee of ₹{fee:.2f}. Please complete payment to confirm registration.',
+                            'registration_fee': f'{fee:.2f}',
+                            'requires_payment': True
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    payment_status = 'PAID'
+                    payment_reference = str(payment_token).strip()
+                else:
+                    payment_status = 'FREE'
+                    payment_reference = 'FREE_REGISTRATION'
+
+                # 6. Create Registration (QR is generated automatically in model save)
                 registration = EventRegistration.objects.create(
                     event=event,
                     user=user,
-                    status='CONFIRMED'
+                    status='CONFIRMED',
+                    payment_status=payment_status,
+                    payment_reference=payment_reference
                 )
 
-                # 6. Create confirmation notification
+                # 7. Create confirmation notification
+                if fee > 0:
+                    notif_msg = f"You are successfully registered for '{event.title}'. Payment of ₹{fee:.2f} confirmed (Ref: {payment_reference}). Your digital ticket is ready with QR code."
+                else:
+                    notif_msg = f"You are successfully registered for '{event.title}'. Your digital ticket is ready with QR code."
+
                 Notification.objects.create(
                     user=user,
                     title="Registration Confirmed! 🎟️",
-                    message=f"You are successfully registered for '{event.title}'. Your digital ticket is ready with QR code.",
+                    message=notif_msg,
                     category='REGISTRATION',
-                    link=f"/tickets"
+                    link="/tickets"
                 )
 
                 serializer = self.get_serializer(registration)
