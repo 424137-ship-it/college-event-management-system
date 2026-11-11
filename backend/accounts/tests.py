@@ -377,3 +377,47 @@ class HarshaXComprehensiveIntegrationTests(TestCase):
         self.assertIn('stats', res.data)
         self.assertGreaterEqual(res.data['stats']['total_events'], 1)
 
+    def test_otp_login_request_and_verify_flow(self):
+        """Test full 2FA OTP login: request OTP, check generation, and verify with JWT issuance."""
+        from accounts.models import EmailOTP
+
+        # 1. Request OTP with valid credentials
+        req_res = self.client.post('/api/auth/login-otp-request/', {
+            'username': self.student.username,
+            'password': 'password123'
+        })
+        self.assertEqual(req_res.status_code, status.HTTP_200_OK)
+        self.assertTrue(req_res.data.get('otp_required'))
+        otp_code = req_res.data.get('demo_otp')
+        self.assertEqual(len(otp_code), 6)
+
+        # Verify DB entry
+        otp_entry = EmailOTP.objects.filter(user=self.student, is_used=False).first()
+        self.assertIsNotNone(otp_entry)
+        self.assertEqual(otp_entry.otp_code, otp_code)
+
+        # 2. Attempt verify with wrong OTP -> 400
+        fail_res = self.client.post('/api/auth/login-otp-verify/', {
+            'username': self.student.username,
+            'otp': '000000'
+        })
+        self.assertEqual(fail_res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('Incorrect', fail_res.data['error'])
+
+        # 3. Verify with valid OTP -> 200 OK + JWT tokens
+        success_res = self.client.post('/api/auth/login-otp-verify/', {
+            'username': self.student.username,
+            'otp': otp_code
+        })
+        self.assertEqual(success_res.status_code, status.HTTP_200_OK)
+        self.assertIn('access', success_res.data)
+        self.assertIn('refresh', success_res.data)
+        self.assertEqual(success_res.data['user']['username'], self.student.username)
+
+        # 4. Attempt verify with already used OTP -> 400
+        reuse_res = self.client.post('/api/auth/login-otp-verify/', {
+            'username': self.student.username,
+            'otp': otp_code
+        })
+        self.assertEqual(reuse_res.status_code, status.HTTP_400_BAD_REQUEST)
+

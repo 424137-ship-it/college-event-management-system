@@ -109,6 +109,92 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const requestLoginOTP = async (credentials) => {
+    try {
+      const res = await authAPI.requestLoginOTP(credentials);
+      return res.data;
+    } catch (err) {
+      // Demo fallback if backend is offline
+      const u = (credentials.username || '').toLowerCase();
+      if (!err.response && (u === 'harsha' || u === 'organizer' || u === 'admin' || u === 'student')) {
+        return {
+          otp_required: true,
+          username: u,
+          email: `${u.charAt(0)}***@gmail.com`,
+          demo_otp: '123456',
+          message: 'Verification code generated (Preview Mode)',
+        };
+      }
+      const errorMsg = err.response?.data?.error || err.response?.data?.detail || 'Invalid username or password';
+      toast.error(errorMsg);
+      throw err;
+    }
+  };
+
+  const verifyLoginOTP = async ({ username, otp }) => {
+    try {
+      const res = await authAPI.verifyLoginOTP({ username, otp });
+      const { access, refresh, user: userData } = res.data;
+      localStorage.setItem('harshax_access_token', access);
+      localStorage.setItem('harshax_refresh_token', refresh);
+      localStorage.setItem('harshax_user', JSON.stringify(userData));
+      setToken(access);
+      setUser(userData);
+      toast.success(`Welcome back, ${userData.first_name || userData.username}!`);
+      return userData;
+    } catch (err) {
+      const u = (username || '').toLowerCase();
+      if (!err.response && (u === 'harsha' || u === 'organizer' || u === 'admin' || u === 'student')) {
+        let role = 'STUDENT';
+        let fullName = 'Harsha Vardhan';
+        if (u === 'organizer') {
+          role = 'ORGANIZER';
+          fullName = 'Campus Organizer';
+        } else if (u === 'admin') {
+          role = 'ADMIN';
+          fullName = 'NIT Administrator';
+        }
+
+        const demoUser = {
+          id: 999,
+          username: u,
+          email: `${u}@nit.ac.in`,
+          first_name: fullName.split(' ')[0],
+          last_name: fullName.split(' ')[1] || '',
+          role: role,
+          is_superuser: role === 'ADMIN',
+          student_profile: {
+            roll_number: '424137',
+            department_name: 'Computer Science & Engineering',
+            year_of_study: 4,
+          },
+        };
+
+        localStorage.setItem('harshax_access_token', 'demo-token');
+        localStorage.setItem('harshax_user', JSON.stringify(demoUser));
+        setToken('demo-token');
+        setUser(demoUser);
+        toast.success(`Welcome back, ${demoUser.first_name}!`);
+        return demoUser;
+      }
+      const errorMsg = err.response?.data?.error || 'Invalid verification code';
+      toast.error(errorMsg);
+      throw err;
+    }
+  };
+
+  const resendLoginOTP = async (username) => {
+    try {
+      const res = await authAPI.resendLoginOTP({ username });
+      toast.success(res.data.message || 'New verification code sent!');
+      return res.data;
+    } catch (err) {
+      const errorMsg = err.response?.data?.error || 'Failed to resend code';
+      toast.error(errorMsg);
+      throw err;
+    }
+  };
+
   const register = async (data) => {
     try {
       const res = await authAPI.register(data);
@@ -157,6 +243,9 @@ export const AuthProvider = ({ children }) => {
         token,
         loading,
         login,
+        requestLoginOTP,
+        verifyLoginOTP,
+        resendLoginOTP,
         register,
         logout,
         updateProfile,

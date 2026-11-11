@@ -233,11 +233,15 @@ export const EventDetails = () => {
 
   const handleAddToCalendar = () => {
     if (!event) return;
-    const title = encodeURIComponent(event.title);
+    const title = encodeURIComponent(event.title || 'Campus Event');
     const details = encodeURIComponent(event.description || '');
     const location = encodeURIComponent(event.venue_name || 'Campus Venue');
-    const startIso = `${event.start_date.replace(/-/g, '')}T${(event.start_time || '09:00:00').replace(/:/g, '')}Z`;
-    const endIso = `${event.end_date.replace(/-/g, '')}T${(event.end_time || '18:00:00').replace(/:/g, '')}Z`;
+    const sDate = event.start_date || new Date().toISOString().split('T')[0];
+    const eDate = event.end_date || sDate;
+    const sTime = event.start_time || '09:00:00';
+    const eTime = event.end_time || '18:00:00';
+    const startIso = `${sDate.replace(/-/g, '')}T${sTime.replace(/:/g, '')}Z`;
+    const endIso = `${eDate.replace(/-/g, '')}T${eTime.replace(/:/g, '')}Z`;
     const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${startIso}/${endIso}`;
     window.open(googleUrl, '_blank');
   };
@@ -337,7 +341,7 @@ export const EventDetails = () => {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <Users size={18} color="#10B981" />
-              <span>{event.registered_count || 0} / {event.max_participants} Enrolled</span>
+              <span>{event.registered_count || 0} / {event.max_participants || 'Unlimited'} Enrolled</span>
             </div>
           </div>
         </div>
@@ -710,7 +714,7 @@ export const EventDetails = () => {
             </div>
 
             <Link
-              to={`/organizers/${event.organizer || 1}`}
+              to={`/organizers/${typeof event.organizer === 'object' && event.organizer ? (event.organizer.id || 1) : (event.organizer || 1)}`}
               className="btn-secondary"
               style={{
                 width: '100%',

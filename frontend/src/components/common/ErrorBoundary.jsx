@@ -78,6 +78,18 @@ export class ErrorBoundary extends React.Component {
               An unexpected display glitch occurred. We've captured the error to prevent further issues.
             </p>
 
+            {this.state.error && (
+              <div style={{ textAlign: 'left', background: '#FEF2F2', padding: 14, borderRadius: 12, marginBottom: 20, fontSize: '0.82rem', color: '#991B1B', fontFamily: 'monospace', overflowX: 'auto', whiteSpace: 'pre-wrap', border: '1px solid #FECACA' }}>
+                <strong>Error:</strong> {this.state.error?.message || String(this.state.error)}
+                {this.state.error?.stack && (
+                  <details style={{ marginTop: 8 }}>
+                    <summary style={{ cursor: 'pointer', color: '#DC2626', fontWeight: 'bold' }}>Stack Trace</summary>
+                    <pre style={{ marginTop: 6, fontSize: '0.72rem', whiteSpace: 'pre-wrap' }}>{this.state.error.stack}</pre>
+                  </details>
+                )}
+              </div>
+            )}
+
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
               <button
                 onClick={this.handleReset}

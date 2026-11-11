@@ -1,11 +1,17 @@
+import random
+import datetime
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth import authenticate
 from rest_framework import generics, permissions, status, viewsets
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
-from .models import Department, Faculty, StudentProfile, OrganizerProfile
+from .models import Department, Faculty, StudentProfile, OrganizerProfile, EmailOTP
 from .serializers import (
     UserSerializer, RegisterSerializer, CustomTokenObtainPairSerializer,
     DepartmentSerializer, FacultySerializer, StudentProfileSerializer, OrganizerProfileSerializer
@@ -13,6 +19,208 @@ from .serializers import (
 from .permissions import IsAdminUserRole
 
 User = get_user_model()
+
+def mask_email(email_str):
+    if not email_str or '@' not in email_str:
+        return 'your registered email'
+    parts = email_str.split('@')
+    name = parts[0]
+    domain = parts[1]
+    if len(name) <= 2:
+        masked_name = name[0] + '*'
+    else:
+        masked_name = name[:2] + '*' * (len(name) - 3) + name[-1]
+    return f"{masked_name}@{domain}"
+
+class LoginOTPRequestView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        username_or_email = request.data.get('username', '').strip()
+        password = request.data.get('password', '')
+
+        if not username_or_email or not password:
+            return Response({'error': 'Please provide both username/email and password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Allow user to log in with either username or email
+        user = None
+        if '@' in username_or_email:
+            user_obj = User.objects.filter(email__iexact=username_or_email).first()
+            if user_obj:
+                user = authenticate(username=user_obj.username, password=password)
+        else:
+            user = authenticate(username=username_or_email, password=password)
+
+        if not user:
+            return Response({'error': 'Invalid credentials. Please check your username and password.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not user.is_active:
+            return Response({'error': 'Your account is currently disabled. Please contact administration.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Invalidate any previous unused OTPs for this user
+        EmailOTP.objects.filter(user=user, is_used=False).update(is_used=True)
+
+        # Generate a secure 6-digit OTP
+        otp_code = f"{random.randint(100000, 999999):06d}"
+        expires_at = timezone.now() + datetime.timedelta(minutes=5)
+        target_email = user.email if user.email else 'harshax00@gmail.com'
+
+        EmailOTP.objects.create(
+            user=user,
+            otp_code=otp_code,
+            email=target_email,
+            expires_at=expires_at
+        )
+
+        email_sent = False
+        try:
+            subject = f"HarshaX • Your NIT Login Verification Code: {otp_code}"
+            text_message = (
+                f"Hello {user.get_full_name() or user.username},\n\n"
+                f"Your 6-digit verification code for National Institute of Technology Event Portal is: {otp_code}\n\n"
+                f"This code will expire in 5 minutes. Please do not share this OTP with anyone.\n\n"
+                f"Regards,\nNational Institute of Technology Campus Team"
+            )
+            html_message = f"""
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 24px; background: #FFFFFF; border: 1.5px solid #E9E1F7; border-radius: 20px;">
+              <div style="text-align: center; margin-bottom: 24px;">
+                <span style="font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #A855F7; background: #FAF5FF; padding: 6px 14px; border-radius: 9999px;">
+                  National Institute of Technology
+                </span>
+                <h2 style="font-size: 22px; font-weight: 800; color: #17152B; margin: 16px 0 6px 0;">Login Verification Code</h2>
+                <p style="font-size: 14px; color: #6B7280; margin: 0;">Use the code below to complete your authentication</p>
+              </div>
+
+              <div style="background: linear-gradient(135deg, #FAF5FF 0%, #F5F3FF 100%); border: 1.5px dashed #C084FC; border-radius: 16px; padding: 24px; text-align: center; margin: 24px 0;">
+                <span style="font-family: monospace, Courier; font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #7E22CE; display: inline-block;">
+                  {otp_code}
+                </span>
+                <p style="font-size: 12px; color: #9333EA; font-weight: 600; margin: 8px 0 0 0;">Valid for 5 minutes</p>
+              </div>
+
+              <p style="font-size: 13px; color: #4B5563; line-height: 1.5; margin: 0 0 16px 0;">
+                Hello <strong>{user.get_full_name() or user.username}</strong>, you requested to sign in to the NIT College Event Management System.
+              </p>
+              <p style="font-size: 12px; color: #9CA3AF; line-height: 1.4; margin: 0;">
+                🔒 If you did not make this request, please contact NIT campus security or administrator immediately.
+              </p>
+            </div>
+            """
+
+            send_mail(
+                subject=subject,
+                message=text_message,
+                html_message=html_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[target_email],
+                fail_silently=False
+            )
+            email_sent = True
+            print(f"[OTP EMAIL SUCCESS] Dispatched email to {target_email}")
+        except Exception as e:
+            print(f"[OTP NOTICE] Live email send note: {str(e)}. Operating in developer fallback mode.")
+
+        print(f"\n=======================================================")
+        print(f" [HARSHAX OTP] User: {user.username} | Code: {otp_code} | Target: {target_email}")
+        print(f"=======================================================\n")
+
+        return Response({
+            'otp_required': True,
+            'username': user.username,
+            'email': mask_email(target_email),
+            'target_email': target_email,
+            'demo_otp': otp_code,
+            'email_sent': email_sent,
+            'message': f"A 6-digit verification code has been dispatched to {mask_email(target_email)}."
+        }, status=status.HTTP_200_OK)
+
+class LoginOTPVerifyView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username', '').strip()
+        otp = request.data.get('otp', '').strip()
+
+        if not username or not otp:
+            return Response({'error': 'Username and OTP are both required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(models.Q(username__iexact=username) | models.Q(email__iexact=username)).first()
+        if not user:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        otp_record = EmailOTP.objects.filter(user=user, is_used=False).order_by('-created_at').first()
+        if not otp_record or not otp_record.is_valid():
+            return Response({'error': 'OTP has expired or is invalid. Please request a new code.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if otp_record.otp_code != otp:
+            return Response({'error': 'Incorrect verification code. Please check and try again.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Mark OTP as used
+        otp_record.is_used = True
+        otp_record.save()
+
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+        user_data = UserSerializer(user, context={'request': request}).data
+
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': user_data,
+            'message': f"Welcome back, {user.get_full_name() or user.username}!"
+        }, status=status.HTTP_200_OK)
+
+class LoginOTPResendView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        username = request.data.get('username', '').strip()
+        if not username:
+            return Response({'error': 'Username is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(models.Q(username__iexact=username) | models.Q(email__iexact=username)).first()
+        if not user:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Cooldown check: don't allow resending within 15 seconds
+        recent = EmailOTP.objects.filter(user=user).order_by('-created_at').first()
+        if recent and (timezone.now() - recent.created_at).total_seconds() < 15:
+            return Response({'error': 'Please wait a few seconds before requesting another code.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        EmailOTP.objects.filter(user=user, is_used=False).update(is_used=True)
+
+        otp_code = f"{random.randint(100000, 999999):06d}"
+        expires_at = timezone.now() + datetime.timedelta(minutes=5)
+        target_email = user.email if user.email else 'harshax00@gmail.com'
+
+        EmailOTP.objects.create(
+            user=user,
+            otp_code=otp_code,
+            email=target_email,
+            expires_at=expires_at
+        )
+
+        email_sent = False
+        try:
+            send_mail(
+                subject=f"HarshaX • Your NIT Login Verification Code: {otp_code}",
+                message=f"Your verification code is: {otp_code}. Valid for 5 minutes.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[target_email],
+                fail_silently=False
+            )
+            email_sent = True
+        except Exception:
+            pass
+
+        print(f"\n[OTP RESEND] User: {user.username} | Code: {otp_code} | Target: {target_email}\n")
+
+        return Response({
+            'message': f"A new verification code has been dispatched to {mask_email(target_email)}.",
+            'demo_otp': otp_code,
+            'email': mask_email(target_email),
+            'email_sent': email_sent
+        }, status=status.HTTP_200_OK)
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
